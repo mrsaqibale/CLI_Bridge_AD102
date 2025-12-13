@@ -238,6 +238,30 @@ public partial class MainForm : Form
         }
     }
 
+    private void AddLog(string message, bool isError = false)
+    {
+        if (InvokeRequired)
+        {
+            Invoke(new Action(() => AddLog(message, isError)));
+            return;
+        }
+
+        var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+        var logEntry = $"[{timestamp}] {(isError ? "ERROR: " : "")}{message}";
+        
+        // Add to ListBox
+        _logListBox.Items.Insert(0, logEntry);
+        if (_logListBox.Items.Count > 1000)
+        {
+            _logListBox.Items.RemoveAt(_logListBox.Items.Count - 1);
+        }
+
+        // Add to TextBox
+        _logTextBox.AppendText(logEntry + Environment.NewLine);
+        _logTextBox.SelectionStart = _logTextBox.Text.Length;
+        _logTextBox.ScrollToCaret();
+    }
+
     private void DeviceService_OnDeviceEvent(object? sender, DeviceEvent e)
     {
         if (InvokeRequired)
@@ -246,17 +270,17 @@ public partial class MainForm : Form
             return;
         }
 
-        var logEntry = $"[{e.Timestamp:HH:mm:ss.fff}] {e.ApiFamily} Event {e.EventCode} Line {e.Line}: {e.Meaning}";
+        var logEntry = $"EVENT: {e.ApiFamily} EventCode={e.EventCode} Line={e.Line} Param={e.Param} DeviceId={e.DeviceId}";
+        if (!string.IsNullOrEmpty(e.Meaning))
+            logEntry += $" | {e.Meaning}";
         if (!string.IsNullOrEmpty(e.CallerId))
-            logEntry += $" CallerID: {e.CallerId}";
+            logEntry += $" | CallerID: {e.CallerId}";
         if (!string.IsNullOrEmpty(e.Dtmf))
-            logEntry += $" DTMF: {e.Dtmf}";
+            logEntry += $" | DTMF: {e.Dtmf}";
+        if (!string.IsNullOrEmpty(e.Status))
+            logEntry += $" | Status: {e.Status}";
 
-        _logListBox.Items.Insert(0, logEntry);
-        if (_logListBox.Items.Count > 1000)
-        {
-            _logListBox.Items.RemoveAt(_logListBox.Items.Count - 1);
-        }
+        AddLog(logEntry);
 
         UpdateStatusPanel();
 
@@ -270,6 +294,26 @@ public partial class MainForm : Form
         }
     }
 
+    private void CopyLogsButton_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(_logTextBox.Text))
+            {
+                Clipboard.SetText(_logTextBox.Text);
+                AddLog("Logs copied to clipboard");
+            }
+            else
+            {
+                MessageBox.Show("No logs to copy", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to copy logs: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
     private void UpdateConnectionStatus(bool connected)
     {
         _connectionStatusLabel.Text = connected ? "Status: Connected" : "Status: Disconnected";
@@ -279,9 +323,30 @@ public partial class MainForm : Form
     private void EnableButton_Click(object? sender, EventArgs e)
     {
         var deviceType = (UsbBoxDeviceType)_deviceTypeCombo.SelectedIndex;
-        bool success = _deviceService.StartUsbBox(deviceType);
-        MessageBox.Show(success ? "Device enabled successfully" : "Failed to enable device",
-            "Enable Device", MessageBoxButtons.OK, success ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+        AddLog($"BUTTON CLICK: Enable Device | DeviceType: {deviceType}");
+        
+        try
+        {
+            bool success = _deviceService.StartUsbBox(deviceType);
+            var errorMsg = _deviceService.LastError;
+            
+            if (success)
+            {
+                AddLog($"RESPONSE: Device enabled successfully | DeviceType: {deviceType}");
+                MessageBox.Show("Device enabled successfully", "Enable Device", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                AddLog($"ERROR: Failed to enable device | DeviceType: {deviceType} | Error: {errorMsg ?? "Unknown error"}", true);
+                MessageBox.Show($"Failed to enable device: {errorMsg ?? "Unknown error"}", 
+                    "Enable Device", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            AddLog($"EXCEPTION: Enable Device | {ex.Message} | StackTrace: {ex.StackTrace}", true);
+            MessageBox.Show($"Exception: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void DisableButton_Click(object? sender, EventArgs e)
