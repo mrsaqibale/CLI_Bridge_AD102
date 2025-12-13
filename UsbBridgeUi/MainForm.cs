@@ -1,4 +1,5 @@
 using UsbDeviceCore;
+using System.IO;
 
 namespace UsbBridgeUi;
 
@@ -18,23 +19,65 @@ public partial class MainForm : Form
     {
         try
         {
+            AddLog("=== USB Bridge UI Starting ===");
+            AddLog("Initializing DeviceService...");
+            
             _deviceService = new DeviceService();
             _deviceService.OnDeviceEvent += DeviceService_OnDeviceEvent;
+            AddLog("DeviceService initialized successfully");
 
             InitializeComponent();
             SetupControls();
             UpdateConnectionStatus(false);
             
+            // Test DLL availability
+            AddLog("Checking DLL availability...");
+            TestDllAvailability();
+            
             // Ensure form is visible
             this.Visible = true;
             this.WindowState = FormWindowState.Normal;
             this.ShowInTaskbar = true;
+            
+            AddLog("=== USB Bridge UI Ready ===");
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error initializing form: {ex.Message}\n\n{ex.StackTrace}", 
-                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            var errorMsg = $"Error initializing form: {ex.Message}\n\n{ex.StackTrace}";
+            AddLog($"FATAL ERROR: {errorMsg}", true);
+            MessageBox.Show(errorMsg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             throw;
+        }
+    }
+
+    private void TestDllAvailability()
+    {
+        var dlls = new[] { "USBBoxProtocol.dll", "AD101Device.dll", "AD800Device.dll", "lame_enc.dll" };
+        var exePath = Path.GetDirectoryName(Application.ExecutablePath) ?? Environment.CurrentDirectory;
+        
+        foreach (var dll in dlls)
+        {
+            var dllPath = Path.Combine(exePath, dll);
+            if (File.Exists(dllPath))
+            {
+                var fileInfo = new FileInfo(dllPath);
+                AddLog($"✓ DLL Found: {dll} | Size: {fileInfo.Length} bytes | Path: {dllPath}");
+            }
+            else
+            {
+                AddLog($"✗ DLL Missing: {dll} | Expected at: {dllPath}", true);
+            }
+        }
+        
+        // Test if we can get device count (tests DLL loading)
+        try
+        {
+            var count = _deviceService.GetDeviceCount();
+            AddLog($"DLL Load Test: GetDeviceCount() = {count}");
+        }
+        catch (Exception ex)
+        {
+            AddLog($"DLL Load Test Failed: {ex.Message}", true);
         }
     }
 
@@ -42,6 +85,7 @@ public partial class MainForm : Form
     {
         Text = "USB Device Bridge - Test UI";
         Size = new Size(900, 700);
+        MinimumSize = new Size(900, 700);
         StartPosition = FormStartPosition.CenterScreen;
 
         _deviceTypeCombo = new ComboBox
@@ -134,9 +178,38 @@ public partial class MainForm : Form
         _logListBox = new ListBox
         {
             Location = new Point(10, 350),
-            Size = new Size(870, 300),
-            Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            Size = new Size(870, 200),
+            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
+
+        _logTextBox = new TextBox
+        {
+            Location = new Point(10, 560),
+            Size = new Size(790, 100),
+            Multiline = true,
+            ScrollBars = ScrollBars.Vertical,
+            ReadOnly = true,
+            Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top,
+            Font = new Font("Consolas", 9)
+        };
+
+        _copyLogsButton = new Button
+        {
+            Text = "Copy Logs",
+            Location = new Point(810, 560),
+            Size = new Size(70, 30),
+            Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+        };
+        _copyLogsButton.Click += CopyLogsButton_Click;
+
+        var clearLogsButton = new Button
+        {
+            Text = "Clear",
+            Location = new Point(810, 600),
+            Size = new Size(70, 30),
+            Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+        };
+        clearLogsButton.Click += (s, e) => { _logTextBox.Clear(); _logListBox.Items.Clear(); };
 
         Controls.Add(_deviceTypeCombo);
         Controls.Add(enableButton);
@@ -153,6 +226,9 @@ public partial class MainForm : Form
         Controls.Add(_statusPanel);
         Controls.Add(logLabel);
         Controls.Add(_logListBox);
+        Controls.Add(_logTextBox);
+        Controls.Add(_copyLogsButton);
+        Controls.Add(clearLogsButton);
 
         _deviceService.SetMessageWindow(Handle);
     }
