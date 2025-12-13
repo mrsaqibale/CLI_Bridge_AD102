@@ -351,18 +351,59 @@ public partial class MainForm : Form
 
     private void DisableButton_Click(object? sender, EventArgs e)
     {
-        bool success = _deviceService.StopUsbBox();
-        MessageBox.Show(success ? "Device disabled successfully" : "Failed to disable device",
-            "Disable Device", MessageBoxButtons.OK, success ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+        AddLog("BUTTON CLICK: Disable Device");
+        
+        try
+        {
+            bool success = _deviceService.StopUsbBox();
+            if (success)
+            {
+                AddLog("RESPONSE: Device disabled successfully");
+                MessageBox.Show("Device disabled successfully", "Disable Device", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                AddLog("ERROR: Failed to disable device", true);
+                MessageBox.Show("Failed to disable device", "Disable Device", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            AddLog($"EXCEPTION: Disable Device | {ex.Message}", true);
+            MessageBox.Show($"Exception: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void PickupButton_Click(object? sender, EventArgs e)
     {
         if (int.TryParse(_lineTextBox.Text, out int line))
         {
-            bool success = _deviceService.Pickup(line);
-            MessageBox.Show(success ? $"Picked up line {line}" : $"Failed to pickup line {line}",
-                "Pickup", MessageBoxButtons.OK, success ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+            AddLog($"BUTTON CLICK: Pickup | Line: {line}");
+            
+            try
+            {
+                bool success = _deviceService.Pickup(line);
+                if (success)
+                {
+                    AddLog($"RESPONSE: Picked up line {line} successfully");
+                    MessageBox.Show($"Picked up line {line}", "Pickup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    AddLog($"ERROR: Failed to pickup line {line}", true);
+                    MessageBox.Show($"Failed to pickup line {line}", "Pickup", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLog($"EXCEPTION: Pickup Line {line} | {ex.Message}", true);
+                MessageBox.Show($"Exception: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        else
+        {
+            AddLog("ERROR: Invalid line number", true);
+            MessageBox.Show("Please enter a valid line number", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 
