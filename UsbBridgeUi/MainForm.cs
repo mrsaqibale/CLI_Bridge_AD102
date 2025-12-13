@@ -411,9 +411,32 @@ public partial class MainForm : Form
     {
         if (int.TryParse(_lineTextBox.Text, out int line))
         {
-            bool success = _deviceService.HookOn(line);
-            MessageBox.Show(success ? $"Hooked on line {line}" : $"Failed to hook on line {line}",
-                "Hook On", MessageBoxButtons.OK, success ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+            AddLog($"BUTTON CLICK: Hook On | Line: {line}");
+            
+            try
+            {
+                bool success = _deviceService.HookOn(line);
+                if (success)
+                {
+                    AddLog($"RESPONSE: Hooked on line {line} successfully");
+                    MessageBox.Show($"Hooked on line {line}", "Hook On", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    AddLog($"ERROR: Failed to hook on line {line}", true);
+                    MessageBox.Show($"Failed to hook on line {line}", "Hook On", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLog($"EXCEPTION: Hook On Line {line} | {ex.Message}", true);
+                MessageBox.Show($"Exception: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        else
+        {
+            AddLog("ERROR: Invalid line number", true);
+            MessageBox.Show("Please enter a valid line number", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 
@@ -421,9 +444,33 @@ public partial class MainForm : Form
     {
         if (int.TryParse(_lineTextBox.Text, out int line) && !string.IsNullOrWhiteSpace(_dialNumberTextBox.Text))
         {
-            bool success = _deviceService.Dial(line, _dialNumberTextBox.Text);
-            MessageBox.Show(success ? $"Dialing {_dialNumberTextBox.Text} on line {line}" : $"Failed to dial on line {line}",
-                "Dial", MessageBoxButtons.OK, success ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+            var number = _dialNumberTextBox.Text;
+            AddLog($"BUTTON CLICK: Dial | Line: {line} | Number: {number}");
+            
+            try
+            {
+                bool success = _deviceService.Dial(line, number);
+                if (success)
+                {
+                    AddLog($"RESPONSE: Dialing {number} on line {line} successfully");
+                    MessageBox.Show($"Dialing {number} on line {line}", "Dial", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    AddLog($"ERROR: Failed to dial {number} on line {line}", true);
+                    MessageBox.Show($"Failed to dial on line {line}", "Dial", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLog($"EXCEPTION: Dial Line {line} Number {number} | {ex.Message}", true);
+                MessageBox.Show($"Exception: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        else
+        {
+            AddLog("ERROR: Invalid line number or dial number", true);
+            MessageBox.Show("Please enter a valid line number and dial number", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 
