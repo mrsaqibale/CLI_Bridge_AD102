@@ -92,7 +92,7 @@ public partial class MainForm : Form
 
     private void InitializeComponent()
     {
-        Text = "USB Device Bridge - Test UI";
+        Text = "USB Caller ID Test UI - Developed by Saqib Ali (mrsaqibale) AD102 Bridge App";
         Size = new Size(900, 700);
         MinimumSize = new Size(900, 700);
         StartPosition = FormStartPosition.CenterScreen;
@@ -170,7 +170,7 @@ public partial class MainForm : Form
 
         _statusPanel = new Panel
         {
-            Location = new Point(10, 115),
+            Location = new Point(10, 145),
             Size = new Size(870, 200),
             BorderStyle = BorderStyle.FixedSingle,
             AutoScroll = true
@@ -179,15 +179,15 @@ public partial class MainForm : Form
         var logLabel = new Label
         {
             Text = "Event Log:",
-            Location = new Point(10, 325),
+            Location = new Point(10, 355),
             Size = new Size(100, 20),
             Font = new Font(Font.FontFamily, 9, FontStyle.Bold)
         };
 
         _logListBox = new ListBox
         {
-            Location = new Point(10, 350),
-            Size = new Size(870, 200),
+            Location = new Point(10, 380),
+            Size = new Size(870, 170),
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
 
@@ -231,6 +231,8 @@ public partial class MainForm : Form
         Controls.Add(pickupButton);
         Controls.Add(hookOnButton);
         Controls.Add(dialButton);
+        Controls.Add(titleLabel);
+        Controls.Add(developerLabel);
         Controls.Add(statusLabel);
         Controls.Add(_statusPanel);
         Controls.Add(logLabel);
