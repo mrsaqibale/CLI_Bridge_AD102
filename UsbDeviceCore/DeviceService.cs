@@ -200,7 +200,13 @@ public class DeviceService
             int result = UsbBoxInterop.UsbBox_EnableDevice();
             if (result != 0)
             {
-                _lastError = $"EnableDevice failed with code {result}. Make sure: 1) USB device is connected, 2) Drivers are installed, 3) Device is not in use by another application.";
+                _lastError = $"EnableDevice failed with code {result}.\n\n" +
+                    $"This usually means:\n" +
+                    $"1. Missing Visual C++ Redistributable (install VC++ Redistributable for Visual Studio)\n" +
+                    $"2. USB device not connected\n" +
+                    $"3. Device drivers not installed\n" +
+                    $"4. Device already in use by another application\n" +
+                    $"5. Missing DLL dependencies (check if all DLLs are 64-bit and match your system)";
                 return false;
             }
 
@@ -349,16 +355,19 @@ public class DeviceService
             // -1 typically means DLL error or device not initialized
             return count;
         }
-        catch (DllNotFoundException)
+        catch (DllNotFoundException ex)
         {
+            System.Diagnostics.Debug.WriteLine($"GetDeviceCount DllNotFoundException: {ex.Message}");
             return -2; // DLL not found
         }
-        catch (System.BadImageFormatException)
+        catch (System.BadImageFormatException ex)
         {
+            System.Diagnostics.Debug.WriteLine($"GetDeviceCount BadImageFormatException: {ex.Message}");
             return -3; // Bitness mismatch
         }
-        catch
+        catch (System.Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"GetDeviceCount Exception: {ex.GetType().Name} - {ex.Message}");
             return -4; // Other error
         }
     }
