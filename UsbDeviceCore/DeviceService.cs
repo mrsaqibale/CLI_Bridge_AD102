@@ -153,10 +153,23 @@ public class DeviceService
             RegisterUsbBoxCallbacks();
 
             _currentDeviceType = deviceType;
+            
+            // Try to get device count first to test DLL loading
+            int deviceCount = -1;
+            try
+            {
+                deviceCount = UsbBoxInterop.UsbBox_GetDeviceCount();
+            }
+            catch (Exception ex)
+            {
+                _lastError = $"Cannot access DLL functions: {ex.Message}. Check if DLLs are in the same folder.";
+                return false;
+            }
+
             int result = UsbBoxInterop.UsbBox_SetDeviceType((int)deviceType);
             if (result != 0)
             {
-                _lastError = $"SetDeviceType failed with code {result}";
+                _lastError = $"SetDeviceType failed with code {result}. DeviceType: {deviceType} ({(int)deviceType}). DeviceCount: {deviceCount}. Possible causes: Device not connected, wrong device type, or driver issue.";
                 return false;
             }
 
@@ -164,18 +177,23 @@ public class DeviceService
             _usbBoxEnabled = result == 0;
             if (!_usbBoxEnabled)
             {
-                _lastError = $"EnableDevice failed with code {result}. Make sure device is connected.";
+                _lastError = $"EnableDevice failed with code {result}. DeviceCount: {deviceCount}. Make sure: 1) USB device is connected, 2) Drivers are installed, 3) Device is not in use by another application.";
             }
             return _usbBoxEnabled;
         }
         catch (DllNotFoundException ex)
         {
-            _lastError = $"DLL not found: {ex.Message}. Ensure DLLs are in the same folder as the executable.";
+            _lastError = $"DLL not found: {ex.Message}. Ensure USBBoxProtocol.dll, AD101Device.dll, AD800Device.dll are in the same folder as the executable.";
+            return false;
+        }
+        catch (System.BadImageFormatException ex)
+        {
+            _lastError = $"DLL bitness mismatch: {ex.Message}. Ensure DLLs match your application architecture (x64 or x86).";
             return false;
         }
         catch (System.Exception ex)
         {
-            _lastError = $"Error starting USB box: {ex.Message}";
+            _lastError = $"Error starting USB box: {ex.GetType().Name} - {ex.Message}";
             return false;
         }
     }

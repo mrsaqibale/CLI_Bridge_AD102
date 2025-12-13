@@ -421,29 +421,50 @@ public partial class MainForm : Form
     private void EnableButton_Click(object? sender, EventArgs e)
     {
         var deviceType = (UsbBoxDeviceType)_deviceTypeCombo.SelectedIndex;
-        AddLog($"BUTTON CLICK: Enable Device | DeviceType: {deviceType}");
+        AddLog($"BUTTON CLICK: Enable Device | DeviceType: {deviceType} (Index: {(int)deviceType})");
         
         try
         {
+            // Check device count before enabling
+            var deviceCount = _deviceService.GetDeviceCount();
+            AddLog($"INFO: Current device count: {deviceCount}");
+            
+            if (deviceCount == 0)
+            {
+                AddLog("WARNING: No devices detected. Make sure USB device is connected.", true);
+            }
+
             bool success = _deviceService.StartUsbBox(deviceType);
             var errorMsg = _deviceService.LastError;
             
             if (success)
             {
-                AddLog($"RESPONSE: Device enabled successfully | DeviceType: {deviceType}");
-                MessageBox.Show("Device enabled successfully", "Enable Device", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                var newDeviceCount = _deviceService.GetDeviceCount();
+                var channelCount = _deviceService.GetChannelCount();
+                AddLog($"RESPONSE: Device enabled successfully | DeviceType: {deviceType} | DeviceCount: {newDeviceCount} | ChannelCount: {channelCount}");
+                MessageBox.Show($"Device enabled successfully!\nDevice Count: {newDeviceCount}\nChannel Count: {channelCount}", 
+                    "Enable Device", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
             {
                 AddLog($"ERROR: Failed to enable device | DeviceType: {deviceType} | Error: {errorMsg ?? "Unknown error"}", true);
-                MessageBox.Show($"Failed to enable device: {errorMsg ?? "Unknown error"}", 
-                    "Enable Device", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                
+                var detailedMsg = $"Failed to enable device.\n\n{errorMsg ?? "Unknown error"}\n\n" +
+                    $"Troubleshooting:\n" +
+                    $"1. Check if USB device is physically connected\n" +
+                    $"2. Verify device drivers are installed\n" +
+                    $"3. Ensure device is not used by another application\n" +
+                    $"4. Try a different device type (F1/F2/F4/F8)\n" +
+                    $"5. Check Device Manager for device status";
+                
+                MessageBox.Show(detailedMsg, "Enable Device Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         catch (Exception ex)
         {
-            AddLog($"EXCEPTION: Enable Device | {ex.Message} | StackTrace: {ex.StackTrace}", true);
-            MessageBox.Show($"Exception: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            AddLog($"EXCEPTION: Enable Device | Type: {ex.GetType().Name} | Message: {ex.Message} | StackTrace: {ex.StackTrace}", true);
+            MessageBox.Show($"Exception occurred:\n\nType: {ex.GetType().Name}\nMessage: {ex.Message}", 
+                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
