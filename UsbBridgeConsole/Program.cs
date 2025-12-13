@@ -147,6 +147,10 @@ class Program
                     if (Enum.TryParse<UsbBoxDeviceType>(deviceTypeStr, true, out var deviceType))
                     {
                         success = _deviceService.StartUsbBox(deviceType);
+                        if (!success && string.IsNullOrEmpty(error))
+                        {
+                            error = _deviceService.LastError ?? "Failed to enable device";
+                        }
                     }
                     else
                     {

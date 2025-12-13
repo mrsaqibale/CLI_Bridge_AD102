@@ -140,8 +140,13 @@ public class DeviceService
         };
     }
 
+    private string? _lastError;
+
+    public string? LastError => _lastError;
+
     public bool StartUsbBox(UsbBoxDeviceType deviceType)
     {
+        _lastError = null;
         try
         {
             // Register callbacks if not already registered
@@ -149,20 +154,28 @@ public class DeviceService
 
             _currentDeviceType = deviceType;
             int result = UsbBoxInterop.UsbBox_SetDeviceType((int)deviceType);
-            if (result != 0) return false;
+            if (result != 0)
+            {
+                _lastError = $"SetDeviceType failed with code {result}";
+                return false;
+            }
 
             result = UsbBoxInterop.UsbBox_EnableDevice();
             _usbBoxEnabled = result == 0;
+            if (!_usbBoxEnabled)
+            {
+                _lastError = $"EnableDevice failed with code {result}. Make sure device is connected.";
+            }
             return _usbBoxEnabled;
         }
         catch (DllNotFoundException ex)
         {
-            System.Diagnostics.Debug.WriteLine($"DLL not found: {ex.Message}");
+            _lastError = $"DLL not found: {ex.Message}. Ensure DLLs are in the same folder as the executable.";
             return false;
         }
         catch (System.Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error starting USB box: {ex.Message}");
+            _lastError = $"Error starting USB box: {ex.Message}";
             return false;
         }
     }
