@@ -85,13 +85,38 @@ public class DeviceService
                 var state = (ChannelState)evt.Param;
                 lineInfo.Status = MapChannelStateToLineStatus(state);
                 evt.Status = lineInfo.Status.ToString();
+                
+                // When state changes to Free (HookOn), log it
+                if (state == ChannelState.HookOn)
+                {
+                    evt.Meaning = "Line is now FREE (Hook On)";
+                }
+                // When state changes to Ring, try to get caller ID immediately
+                else if (state == ChannelState.RingOn)
+                {
+                    evt.Meaning = "RINGING - Attempting to get caller ID...";
+                    // Try to get caller ID when ringing starts
+                    var callerId = GetCallerId(line);
+                    if (!string.IsNullOrEmpty(callerId))
+                    {
+                        lineInfo.LastCallerId = callerId;
+                        evt.CallerId = callerId;
+                        evt.Meaning = $"RINGING - Caller ID: {callerId}";
+                    }
+                }
                 break;
             case UsbBoxEventCode.CallerId:
+                // Caller ID event - get the number
                 var callerId = GetCallerId(line);
                 if (!string.IsNullOrEmpty(callerId))
                 {
                     lineInfo.LastCallerId = callerId;
                     evt.CallerId = callerId;
+                    evt.Meaning = $"Caller ID received: {callerId}";
+                }
+                else
+                {
+                    evt.Meaning = "Caller ID event but number is empty";
                 }
                 break;
             case UsbBoxEventCode.Dtmf:
@@ -100,13 +125,26 @@ public class DeviceService
                 {
                     lineInfo.LastDtmf = dtmf;
                     evt.Dtmf = dtmf;
+                    evt.Meaning = $"DTMF received: {dtmf}";
                 }
                 break;
             case UsbBoxEventCode.RingCount:
                 lineInfo.RingCount = (int)evt.Param;
+                evt.Meaning = $"Ring count changed to {evt.Param}";
+                // When ring count changes, also try to get caller ID
+                if (lineInfo.Status == LineStatus.Ringing)
+                {
+                    var ringCallerId = GetCallerId(line);
+                    if (!string.IsNullOrEmpty(ringCallerId) && string.IsNullOrEmpty(lineInfo.LastCallerId))
+                    {
+                        lineInfo.LastCallerId = ringCallerId;
+                        evt.CallerId = ringCallerId;
+                    }
+                }
                 break;
             case UsbBoxEventCode.Voltage:
                 lineInfo.Voltage = (int)evt.Param;
+                evt.Meaning = $"Voltage changed to {evt.Param}V";
                 break;
         }
     }
@@ -154,52 +192,41 @@ public class DeviceService
 
             _currentDeviceType = deviceType;
             
-            // Try to get device count first to test DLL loading
-            int deviceCount = GetDeviceCount();
+            // IMPORTANT: Based on working demos, the correct order is:
+            // 1. EnableDevice FIRST (not SetDeviceType)
+            // 2. Set callbacks/message window
+            // 3. THEN SetDeviceType
             
-            // Interpret device count return values
-            string deviceCountMsg = deviceCount switch
-            {
-                -1 => "DLL function returned -1 (device not initialized or not found)",
-                -2 => "DLL not found",
-                -3 => "DLL bitness mismatch (x64/x86)",
-                -4 => "DLL access error",
-                < 0 => $"DLL error code: {deviceCount}",
-                _ => $"Device count: {deviceCount}"
-            };
-
-            // Some DLLs require SetDeviceType to be called before GetDeviceCount works
-            // So we'll try SetDeviceType first, then check device count
-            
-            int result = UsbBoxInterop.UsbBox_SetDeviceType((int)deviceType);
+            int result = UsbBoxInterop.UsbBox_EnableDevice();
             if (result != 0)
             {
-                // After SetDeviceType fails, try to get more info
-                int deviceCountAfter = GetDeviceCount();
-                string deviceInfo = deviceCountAfter >= 0 
-                    ? $"DeviceCount after error: {deviceCountAfter}" 
-                    : $"DeviceCount check failed: {deviceCountAfter}";
-                
-                _lastError = $"SetDeviceType failed with code {result}.\n" +
-                    $"DeviceType: {deviceType} ({(int)deviceType})\n" +
-                    $"{deviceCountMsg}\n" +
-                    $"{deviceInfo}\n\n" +
-                    $"Possible causes:\n" +
-                    $"1. USB device not physically connected\n" +
-                    $"2. Device drivers not installed\n" +
-                    $"3. Wrong device type selected (try F1, F4, or F8)\n" +
-                    $"4. Device already in use by another application\n" +
-                    $"5. DLL dependency missing (check if all DLLs are present)";
+                _lastError = $"EnableDevice failed with code {result}. Make sure: 1) USB device is connected, 2) Drivers are installed, 3) Device is not in use by another application.";
                 return false;
             }
 
-            result = UsbBoxInterop.UsbBox_EnableDevice();
-            _usbBoxEnabled = result == 0;
-            if (!_usbBoxEnabled)
+            // Now set device type (after EnableDevice)
+            result = UsbBoxInterop.UsbBox_SetDeviceType((int)deviceType);
+            if (result != 0)
             {
-                _lastError = $"EnableDevice failed with code {result}. DeviceCount: {deviceCount}. Make sure: 1) USB device is connected, 2) Drivers are installed, 3) Device is not in use by another application.";
+                // Try to get device info for better error message
+                int deviceCount = GetDeviceCount();
+                string deviceInfo = deviceCount >= 0 
+                    ? $"DeviceCount: {deviceCount}" 
+                    : $"DeviceCount check failed: {deviceCount}";
+                
+                _lastError = $"SetDeviceType failed with code {result}.\n" +
+                    $"DeviceType: {deviceType} ({(int)deviceType})\n" +
+                    $"{deviceInfo}\n\n" +
+                    $"Possible causes:\n" +
+                    $"1. Wrong device type selected (try F1 instead of F2, or vice versa)\n" +
+                    $"2. Device not fully initialized\n" +
+                    $"3. Device hardware mismatch";
+                // Don't return false here - EnableDevice succeeded, so device is working
+                // Just log the warning
             }
-            return _usbBoxEnabled;
+
+            _usbBoxEnabled = true;
+            return true;
         }
         catch (DllNotFoundException ex)
         {
