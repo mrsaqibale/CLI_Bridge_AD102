@@ -19,16 +19,17 @@ public partial class MainForm : Form
     {
         try
         {
-            AddLog("=== USB Bridge UI Starting ===");
-            AddLog("Initializing DeviceService...");
-            
             _deviceService = new DeviceService();
             _deviceService.OnDeviceEvent += DeviceService_OnDeviceEvent;
-            AddLog("DeviceService initialized successfully");
 
             InitializeComponent();
             SetupControls();
             UpdateConnectionStatus(false);
+            
+            // Now we can use AddLog since InitializeComponent has been called
+            AddLog("=== USB Bridge UI Starting ===");
+            AddLog("Initializing DeviceService...");
+            AddLog("DeviceService initialized successfully");
             
             // Test DLL availability
             AddLog("Checking DLL availability...");
@@ -44,7 +45,15 @@ public partial class MainForm : Form
         catch (Exception ex)
         {
             var errorMsg = $"Error initializing form: {ex.Message}\n\n{ex.StackTrace}";
-            AddLog($"FATAL ERROR: {errorMsg}", true);
+            // Try to log, but if controls aren't initialized, just show message box
+            try
+            {
+                AddLog($"FATAL ERROR: {errorMsg}", true);
+            }
+            catch
+            {
+                // Ignore if AddLog fails
+            }
             MessageBox.Show(errorMsg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             throw;
         }
@@ -322,20 +331,31 @@ public partial class MainForm : Form
             return;
         }
 
+        // Check if controls are initialized
+        if (_logListBox == null || _logTextBox == null)
+            return;
+
         var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
         var logEntry = $"[{timestamp}] {(isError ? "ERROR: " : "")}{message}";
         
-        // Add to ListBox
-        _logListBox.Items.Insert(0, logEntry);
-        if (_logListBox.Items.Count > 1000)
+        try
         {
-            _logListBox.Items.RemoveAt(_logListBox.Items.Count - 1);
-        }
+            // Add to ListBox
+            _logListBox.Items.Insert(0, logEntry);
+            if (_logListBox.Items.Count > 1000)
+            {
+                _logListBox.Items.RemoveAt(_logListBox.Items.Count - 1);
+            }
 
-        // Add to TextBox
-        _logTextBox.AppendText(logEntry + Environment.NewLine);
-        _logTextBox.SelectionStart = _logTextBox.Text.Length;
-        _logTextBox.ScrollToCaret();
+            // Add to TextBox
+            _logTextBox.AppendText(logEntry + Environment.NewLine);
+            _logTextBox.SelectionStart = _logTextBox.Text.Length;
+            _logTextBox.ScrollToCaret();
+        }
+        catch
+        {
+            // Ignore errors if controls aren't ready
+        }
     }
 
     private void DeviceService_OnDeviceEvent(object? sender, DeviceEvent e)
