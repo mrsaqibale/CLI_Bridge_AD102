@@ -155,21 +155,41 @@ public class DeviceService
             _currentDeviceType = deviceType;
             
             // Try to get device count first to test DLL loading
-            int deviceCount = -1;
-            try
+            int deviceCount = GetDeviceCount();
+            
+            // Interpret device count return values
+            string deviceCountMsg = deviceCount switch
             {
-                deviceCount = UsbBoxInterop.UsbBox_GetDeviceCount();
-            }
-            catch (Exception ex)
-            {
-                _lastError = $"Cannot access DLL functions: {ex.Message}. Check if DLLs are in the same folder.";
-                return false;
-            }
+                -1 => "DLL function returned -1 (device not initialized or not found)",
+                -2 => "DLL not found",
+                -3 => "DLL bitness mismatch (x64/x86)",
+                -4 => "DLL access error",
+                < 0 => $"DLL error code: {deviceCount}",
+                _ => $"Device count: {deviceCount}"
+            };
 
+            // Some DLLs require SetDeviceType to be called before GetDeviceCount works
+            // So we'll try SetDeviceType first, then check device count
+            
             int result = UsbBoxInterop.UsbBox_SetDeviceType((int)deviceType);
             if (result != 0)
             {
-                _lastError = $"SetDeviceType failed with code {result}. DeviceType: {deviceType} ({(int)deviceType}). DeviceCount: {deviceCount}. Possible causes: Device not connected, wrong device type, or driver issue.";
+                // After SetDeviceType fails, try to get more info
+                int deviceCountAfter = GetDeviceCount();
+                string deviceInfo = deviceCountAfter >= 0 
+                    ? $"DeviceCount after error: {deviceCountAfter}" 
+                    : $"DeviceCount check failed: {deviceCountAfter}";
+                
+                _lastError = $"SetDeviceType failed with code {result}.\n" +
+                    $"DeviceType: {deviceType} ({(int)deviceType})\n" +
+                    $"{deviceCountMsg}\n" +
+                    $"{deviceInfo}\n\n" +
+                    $"Possible causes:\n" +
+                    $"1. USB device not physically connected\n" +
+                    $"2. Device drivers not installed\n" +
+                    $"3. Wrong device type selected (try F1, F4, or F8)\n" +
+                    $"4. Device already in use by another application\n" +
+                    $"5. DLL dependency missing (check if all DLLs are present)";
                 return false;
             }
 
@@ -298,11 +318,21 @@ public class DeviceService
     {
         try
         {
-            return UsbBoxInterop.UsbBox_GetDeviceCount();
+            int count = UsbBoxInterop.UsbBox_GetDeviceCount();
+            // -1 typically means DLL error or device not initialized
+            return count;
+        }
+        catch (DllNotFoundException)
+        {
+            return -2; // DLL not found
+        }
+        catch (System.BadImageFormatException)
+        {
+            return -3; // Bitness mismatch
         }
         catch
         {
-            return 0;
+            return -4; // Other error
         }
     }
 

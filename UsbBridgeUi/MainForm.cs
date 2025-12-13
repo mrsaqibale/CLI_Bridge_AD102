@@ -445,9 +445,25 @@ public partial class MainForm : Form
         {
             // Check device count before enabling
             var deviceCount = _deviceService.GetDeviceCount();
-            AddLog($"INFO: Current device count: {deviceCount}");
             
-            if (deviceCount == 0)
+            string deviceCountInfo = deviceCount switch
+            {
+                -1 => "DLL returned -1 (device not initialized or error)",
+                -2 => "DLL not found",
+                -3 => "DLL bitness mismatch",
+                -4 => "DLL access error",
+                < 0 => $"DLL error code: {deviceCount}",
+                0 => "No devices detected",
+                _ => $"{deviceCount} device(s) detected"
+            };
+            
+            AddLog($"INFO: Device status check: {deviceCountInfo}");
+            
+            if (deviceCount < 0)
+            {
+                AddLog($"WARNING: DLL issue detected. Code: {deviceCount}. Check DLL files and dependencies.", true);
+            }
+            else if (deviceCount == 0)
             {
                 AddLog("WARNING: No devices detected. Make sure USB device is connected.", true);
             }
