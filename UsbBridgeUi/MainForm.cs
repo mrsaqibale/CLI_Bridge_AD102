@@ -79,14 +79,30 @@ public partial class MainForm : Form
         }
         
         // Test if we can get device count (tests DLL loading)
+        // Note: This may fail if VC++ Redistributable is not installed
         try
         {
             var count = _deviceService.GetDeviceCount();
-            AddLog($"DLL Load Test: GetDeviceCount() = {count}");
+            string countMsg = count switch
+            {
+                -2 => "DLL not found - check if DLLs are in the same folder",
+                -3 => "DLL bitness mismatch - ensure x64 DLLs for x64 app",
+                -4 => "DLL access error - likely missing VC++ Redistributable",
+                < 0 => $"DLL error code: {count}",
+                _ => $"Device count: {count}"
+            };
+            AddLog($"DLL Load Test: GetDeviceCount() = {count} ({countMsg})");
+            
+            if (count < 0)
+            {
+                AddLog("⚠ WARNING: DLL cannot be loaded. Install Visual C++ Redistributable (x64) from Microsoft.", true);
+                AddLog("   Download: https://aka.ms/vs/17/release/vc_redist.x64.exe", true);
+            }
         }
         catch (Exception ex)
         {
-            AddLog($"DLL Load Test Failed: {ex.Message}", true);
+            AddLog($"DLL Load Test Failed: {ex.GetType().Name} - {ex.Message}", true);
+            AddLog("⚠ Install Visual C++ Redistributable (x64) to fix this issue.", true);
         }
     }
 
