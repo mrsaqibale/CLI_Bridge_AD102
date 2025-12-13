@@ -163,19 +163,23 @@ public class DeviceService
 
     private void ParseEvent(DeviceEvent evt)
     {
-        evt.Meaning = ((UsbBoxEventCode)evt.EventCode) switch
+        // Meaning is set in UpdateLineInfo for most events, but provide fallback
+        if (string.IsNullOrEmpty(evt.Meaning))
         {
-            UsbBoxEventCode.State => $"State changed to {(ChannelState)evt.Param}",
-            UsbBoxEventCode.Voltage => $"Voltage: {evt.Param}",
-            UsbBoxEventCode.CallerId => "Caller ID received",
-            UsbBoxEventCode.Dtmf => "DTMF received",
-            UsbBoxEventCode.RingCount => $"Ring count: {evt.Param}",
-            UsbBoxEventCode.UsbConnect => "USB device connected",
-            UsbBoxEventCode.UsbDisconnect => "USB device disconnected",
-            UsbBoxEventCode.BusyTone => "Busy tone detected",
-            UsbBoxEventCode.MissedInboundCall => "Missed inbound call",
-            _ => $"Event code {evt.EventCode}"
-        };
+            evt.Meaning = ((UsbBoxEventCode)evt.EventCode) switch
+            {
+                UsbBoxEventCode.State => $"State changed to {(ChannelState)evt.Param}",
+                UsbBoxEventCode.Voltage => $"Voltage: {evt.Param}V",
+                UsbBoxEventCode.CallerId => "Caller ID event received",
+                UsbBoxEventCode.Dtmf => "DTMF digits received",
+                UsbBoxEventCode.RingCount => $"Ring count changed to {evt.Param}",
+                UsbBoxEventCode.UsbConnect => "USB device connected",
+                UsbBoxEventCode.UsbDisconnect => "USB device disconnected",
+                UsbBoxEventCode.BusyTone => "Busy tone detected",
+                UsbBoxEventCode.MissedInboundCall => "Missed inbound call",
+                _ => $"Event code {evt.EventCode}"
+            };
+        }
     }
 
     private string? _lastError;
