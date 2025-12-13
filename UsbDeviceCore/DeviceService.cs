@@ -96,12 +96,12 @@ public class DeviceService
                 {
                     evt.Meaning = "RINGING - Attempting to get caller ID...";
                     // Try to get caller ID when ringing starts
-                    var callerId = GetCallerId(line);
-                    if (!string.IsNullOrEmpty(callerId))
+                    var ringCallerId = GetCallerId(line);
+                    if (!string.IsNullOrEmpty(ringCallerId))
                     {
-                        lineInfo.LastCallerId = callerId;
-                        evt.CallerId = callerId;
-                        evt.Meaning = $"RINGING - Caller ID: {callerId}";
+                        lineInfo.LastCallerId = ringCallerId;
+                        evt.CallerId = ringCallerId;
+                        evt.Meaning = $"RINGING - Caller ID: {ringCallerId}";
                     }
                 }
                 break;
