@@ -6,11 +6,13 @@ public partial class MainForm : Form
 {
     private readonly DeviceService _deviceService;
     private ListBox _logListBox = null!;
+    private TextBox _logTextBox = null!;
     private Panel _statusPanel = null!;
     private ComboBox _deviceTypeCombo = null!;
     private TextBox _lineTextBox = null!;
     private TextBox _dialNumberTextBox = null!;
     private Label _connectionStatusLabel = null!;
+    private Button _copyLogsButton = null!;
 
     public MainForm()
     {
