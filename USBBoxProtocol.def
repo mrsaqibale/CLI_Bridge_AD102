@@ -1,0 +1,188 @@
+; USBBoxProtocol.def : Declares the module parameters for the DLL.
+
+LIBRARY      "USBBoxProtocol"
+DESCRIPTION  'USBBoxProtocol Windows Dynamic Link Library'
+
+EXPORTS
+    ; Explicit exports can go here
+
+     UsbBox_EnableDevice
+	 UsbBox_DisableDevice
+	 UsbBox_SetDeviceType
+	 UsbBox_SetRecordMethod
+	 UsbBox_SetRecordFormat
+	 UsbBox_VoiceCallBack
+	 UsbBox_EventCallBack
+	 UsbBox_SetMsg
+	 UsbBox_GetVoltage
+	 UsbBox_GetRingCount
+	 UsbBox_GetRecordTime
+	 UsbBox_GetCallerNumber
+	 UsbBox_GetDtmfNumber
+	 UsbBox_ClearCallerNumber
+	 UsbBox_ClearDtmfNumber
+	 UsbBox_GetState
+	 UsbBox_Pickup
+	 UsbBox_HookOn
+	 UsbBox_MicOn
+	 UsbBox_MicOff
+	 UsbBox_Diall
+	 UsbBox_AutoDial
+	 UsbBox_PlayFile
+	 UsbBox_StopPlay
+	 UsbBox_StartRecord
+	 UsbBox_StartRecordToFile
+	 UsbBox_StopRecord
+	 UsbBox_SetAutoRecord
+	 UsbBox_SetRecordFolder
+	 UsbBox_GetRecordFilePath
+	 UsbBox_GetDeviceCount
+	 UsbBox_GetChannelCount
+	 UsbBox_GetDeviceSerial
+	 UsbBox_GetDeviceVersion
+	 UsbBox_GetDllVersion
+	 UsbBox_Adpcm2PCM
+	 
+	 UsbBox_SetVoltage
+	 UsbBox_SetTime
+	 UsbBox_StartRecordByPickup
+	 UsbBox_SetWaitRecordTime
+	 UsbBox_TriggerParam
+	 UsbBox_SetOutNumber
+	 UsbBox_SetPlayVolume
+	 UsbBox_SetRecordVolume
+	 UsbBox_SetAGC
+	 
+	 
+	 UsbBox_StopSaveDtmfTime
+	 UsbBox_MissedCallTime
+	 UsbBox_SoftDialWaitTime
+	 UsbBox_DtmfCallerIDTime
+	 UsbBox_EnableRecord
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 UsbBox_EnableNetDial_TCP
+	 UsbBox_DisableNetDial_TCP
+	 UsbBox_EnableNetDial_WS
+	 UsbBox_DisableNetDial_WS
+	 UsbBox_GetSocketDialCommand
+	 UsbBox_GetWSDialCommand
+	 
+	 
+	 
+	 UsbBox_SetAnnouncement
+	 UsbBox_SetAnnouncementFile
+	 UsbBox_SetAnswerMachine
+	 UsbBox_SetAnswerMchineFile
+	 UsbBox_AnswerMachineTimer
+	 UsbBox_AnswerMachineParam
+	 
+	 
+	 
+	 UsbBox_SetPostMessage
+	 UsbBox_SetPostFile
+	 UsbBox_SetPostMessageURL
+	 UsbBox_SetPostFileURL
+	 UsbBox_SetSystemInfo
+	 
+	 UsbBox_SetFTP
+	 UsbBox_SetFTPParam
+	 UsbBox_EnableLog
+	 
+	 VRBox_SetTelMsg
+	 
+	 
+	 
+	 
+	 
+	 AD800_Init
+	 AD800_Free
+	 AD800_SetMsgHwnd
+	 AD800_SetCallbackFun
+	 AD800_SetAudioCallbackFun
+	 AD800_SetFskCallbackFun
+	 AD800_SendCommand
+	 AD800_ReadDeviceSN
+	 AD800_ReadDeviceType
+	 AD800_GetDeviceType
+	 AD800_GetTotalDev
+	 AD800_GetTotalCh
+	 AD800_GetChState
+	 AD800_GetCallerId
+	 AD800_GetDialed
+	 AD800_GetVer
+	 AD800_GetDevSN
+	 AD800_GetRingCount
+	 AD800_SetHookVoltage
+	 AD800_SetHookTime
+	 AD800_SetRingTime
+	 AD800_GetHookVoltage
+	 AD800_GetHookTime
+	 AD800_SetRevCIDTime
+	 AD800_GetRevCIDTime
+	 AD800_SetRecVolume
+	 AD800_SetPlaybackVolume
+	 AD800_GetRecVolume
+	 AD800_GetPlaybackVolume
+	 AD800_StartFileRec
+	 AD800_StartMemRec
+	 AD800_GetMemRecBytes
+	 AD800_StopRec
+	 AD800_PlayFile
+	 AD800_PlayMem
+	 AD800_StopPlay
+	 AD800_VoiceTrigger
+	 AD800_StopVoiceTrigger
+	 AD800_SetVoiceThreshold
+	 AD800_SetSilenceThreshold
+	 AD800_GetVoiceThreshold
+	 AD800_GetSilenceThreshold
+	 
+	 AD800_DetBusyTone
+	 AD800_StopDetBusyTone
+	 AD800_SendDTMF
+	 AD800_DialByCard
+	 AD800_PickUp
+	 AD800_HangUp
+	 AD800_MicMuteOn
+	 AD800_MicMuteOff
+	 AD800_DisconnectPhone
+	 AD800_ConnectPhone
+	 AD800_SetAGC
+	 
+	 
+	 
+	 AD101_InitDevice
+	 AD101_GetDevice
+	 AD101_FreeDevice
+	 AD101_GetCurDevCount
+	 AD101_ChangeWindowHandle
+	 AD101_SetEventCallbackFun
+	 AD101_ShowCollateralPhoneDialed
+	 AD101_ReadParameter
+	 AD101_GetParameter
+	 AD101_SetParameter
+	 AD101_GetCallerID
+	 AD101_GetCallerIDType
+	 AD101_ClearCallerID
+	 AD101_GetDialDigit
+	 AD101_ClearDialDigit
+	 AD101_GetCollateralDialDigit
+	 AD101_GetLineState
+	 AD101_GetRingIndex
+	 AD101_GetTalkTime
+	 AD101_GetCPUVersion
+	 AD101_ReadCPUID
+	 AD101_GetCPUID
+	 AD101_SetLED
+	 AD101_SetBusy
+	 AD101_SetLineStartTalk
+	 AD101_SetDialOutStartTalkingTime
+	 AD101_SetRingOffTime
