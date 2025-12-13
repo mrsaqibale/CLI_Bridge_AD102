@@ -14,12 +14,26 @@ public partial class MainForm : Form
 
     public MainForm()
     {
-        _deviceService = new DeviceService();
-        _deviceService.OnDeviceEvent += DeviceService_OnDeviceEvent;
+        try
+        {
+            _deviceService = new DeviceService();
+            _deviceService.OnDeviceEvent += DeviceService_OnDeviceEvent;
 
-        InitializeComponent();
-        SetupControls();
-        UpdateConnectionStatus(false);
+            InitializeComponent();
+            SetupControls();
+            UpdateConnectionStatus(false);
+            
+            // Ensure form is visible
+            this.Visible = true;
+            this.WindowState = FormWindowState.Normal;
+            this.ShowInTaskbar = true;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error initializing form: {ex.Message}\n\n{ex.StackTrace}", 
+                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            throw;
+        }
     }
 
     private void InitializeComponent()
