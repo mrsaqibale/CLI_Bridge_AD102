@@ -13,40 +13,56 @@ public class DeviceService
 
     public event EventHandler<DeviceEvent>? OnDeviceEvent;
 
+    private bool _callbacksRegistered = false;
+
     public DeviceService()
     {
-        RegisterUsbBoxCallbacks();
+        // Don't register callbacks in constructor - do it lazily when device is enabled
     }
 
     private void RegisterUsbBoxCallbacks()
     {
-        UsbBoxInterop.UsbEventCallback eventCallback = (eventCode, reference, param, deviceId) =>
+        if (_callbacksRegistered) return;
+
+        try
         {
-            var evt = new DeviceEvent
+            UsbBoxInterop.UsbEventCallback eventCallback = (eventCode, reference, param, deviceId) =>
             {
-                ApiFamily = ApiFamily.UsbBox,
-                EventCode = eventCode,
-                Line = reference,
-                Param = param,
-                DeviceId = deviceId,
-                Timestamp = DateTime.Now
+                var evt = new DeviceEvent
+                {
+                    ApiFamily = ApiFamily.UsbBox,
+                    EventCode = eventCode,
+                    Line = reference,
+                    Param = param,
+                    DeviceId = deviceId,
+                    Timestamp = DateTime.Now
+                };
+
+                UpdateLineInfo(reference, evt);
+                ParseEvent(evt);
+                OnDeviceEvent?.Invoke(this, evt);
             };
 
-            UpdateLineInfo(reference, evt);
-            ParseEvent(evt);
-            OnDeviceEvent?.Invoke(this, evt);
-        };
+            UsbBoxInterop.UsbVoiceCallback voiceCallback = (buffer, length, reference, deviceIndex, adpcmPacket, deviceId) =>
+            {
+                // Voice data callback - can be extended later
+            };
 
-        UsbBoxInterop.UsbVoiceCallback voiceCallback = (buffer, length, reference, deviceIndex, adpcmPacket, deviceId) =>
+            UsbBoxInterop.EventCallbackInstance = eventCallback;
+            UsbBoxInterop.VoiceCallbackInstance = voiceCallback;
+
+            UsbBoxInterop.UsbBox_EventCallBack(eventCallback);
+            UsbBoxInterop.UsbBox_VoiceCallBack(voiceCallback);
+            _callbacksRegistered = true;
+        }
+        catch (DllNotFoundException)
         {
-            // Voice data callback - can be extended later
-        };
-
-        UsbBoxInterop.EventCallbackInstance = eventCallback;
-        UsbBoxInterop.VoiceCallbackInstance = voiceCallback;
-
-        UsbBoxInterop.UsbBox_EventCallBack(eventCallback);
-        UsbBoxInterop.UsbBox_VoiceCallBack(voiceCallback);
+            // DLL not found - will be registered when device is enabled
+        }
+        catch (System.Exception)
+        {
+            // Other errors - will be registered when device is enabled
+        }
     }
 
     private void UpdateLineInfo(int line, DeviceEvent evt)
@@ -128,6 +144,9 @@ public class DeviceService
     {
         try
         {
+            // Register callbacks if not already registered
+            RegisterUsbBoxCallbacks();
+
             _currentDeviceType = deviceType;
             int result = UsbBoxInterop.UsbBox_SetDeviceType((int)deviceType);
             if (result != 0) return false;
@@ -136,8 +155,14 @@ public class DeviceService
             _usbBoxEnabled = result == 0;
             return _usbBoxEnabled;
         }
-        catch
+        catch (DllNotFoundException ex)
         {
+            System.Diagnostics.Debug.WriteLine($"DLL not found: {ex.Message}");
+            return false;
+        }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error starting USB box: {ex.Message}");
             return false;
         }
     }

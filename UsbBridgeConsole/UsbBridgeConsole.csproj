@@ -12,18 +12,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="..\USBBoxProtocol.dll">
+    <Content Include="..\USBBoxProtocol.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="..\AD101Device.dll">
+      <Link>USBBoxProtocol.dll</Link>
+    </Content>
+    <Content Include="..\AD101Device.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="..\AD800Device.dll">
+      <Link>AD101Device.dll</Link>
+    </Content>
+    <Content Include="..\AD800Device.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="..\lame_enc.dll">
+      <Link>AD800Device.dll</Link>
+    </Content>
+    <Content Include="..\lame_enc.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+      <Link>lame_enc.dll</Link>
+    </Content>
   </ItemGroup>
 
 </Project>

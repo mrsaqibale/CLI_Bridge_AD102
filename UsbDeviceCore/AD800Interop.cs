@@ -12,8 +12,10 @@ internal static class AD800Interop
     public delegate void AD800FskProc(int iChannel, IntPtr pFskBuff, int Length);
 
     public static AD800EventCallbackProc? EventCallbackInstance;
+    #pragma warning disable CS0649 // Field is assigned via P/Invoke
     public static AD800AudioCallbackProc? AudioCallbackInstance;
     public static AD800FskProc? FskCallbackInstance;
+    #pragma warning restore CS0649
 
     [DllImport(DllName, CallingConvention = CallingConvention.StdCall)]
     public static extern bool AD800_Init();
