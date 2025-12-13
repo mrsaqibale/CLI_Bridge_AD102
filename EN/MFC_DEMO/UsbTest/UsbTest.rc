@@ -1,0 +1,261 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Chinese (P.R.C.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+#ifdef _WIN32
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
+    "LANGUAGE 4, 2\r\n"
+    "#pragma code_page(936)\r\n"
+    "#include ""res\\UsbTest.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""     // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\UsbTest.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 235, 55
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About SDK Demo"
+FONT 10, "Î¢ÈíÑÅºÚ", 400, 0, 0x86
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,11,17,16,13
+    LTEXT           "SDK Demo Version 1.0",IDC_STATIC,40,10,119,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2022",IDC_STATIC,40,25,119,8
+    DEFPUSHBUTTON   "OK",IDOK,178,7,50,16,WS_GROUP
+END
+
+IDD_USBTEST_DIALOG DIALOGEX 0, 0, 607, 311
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "SDK Demo(20221016)"
+FONT 9, "Arial", 400, 0, 0x0
+BEGIN
+    PUSHBUTTON      "Enable Device",IDC_BUTTON_ENABLE,12,13,74,24
+    PUSHBUTTON      "Disable Device",IDC_BUTTON_DISABLE,90,13,74,24,WS_DISABLED
+    GROUPBOX        "",IDC_STATIC,7,3,593,41
+    RTEXT           "USB Type:",IDC_STATIC1,15,56,78,8
+    COMBOBOX        IDC_COMBO1,99,54,408,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "SetDeviceType",IDC_BUTTON_SETTYPE,511,49,86,21
+    RTEXT           "USB Device:",IDC_STATIC,169,14,76,8
+    RTEXT           "Channel Count:",IDC_STATIC,169,30,76,8
+    EDITTEXT        IDC_EDIT_USBCOUNT,250,11,254,14,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT_CHANNELCOUNT,250,27,254,14,ES_AUTOHSCROLL | ES_READONLY
+    CONTROL         "",IDC_LIST1,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,95,593,100
+    RTEXT           "Channel ID:",IDC_STATIC2,15,79,78,8
+    COMBOBOX        IDC_COMBO2,99,76,33,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Clear",IDC_BUTTON_CLEAR,511,72,86,21
+    PUSHBUTTON      "Pickup",IDC_BUTTON_PICKUP,134,72,33,21
+    PUSHBUTTON      "Idle",IDC_BUTTON_HOOKON,168,72,27,21
+    PUSHBUTTON      "Mic ON",IDC_BUTTON_MICON,196,72,31,21
+    PUSHBUTTON      "Mic OFF",IDC_BUTTON_MICOFF,228,72,31,21
+    EDITTEXT        IDC_EDIT_DTMFNUMBER,383,75,84,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Auto Call",IDC_BUTTON_AUTOCALL,471,72,36,21
+    PUSHBUTTON      "USB Count",IDC_BUTTON_GETUSBCOUNT,511,10,86,14
+    PUSHBUTTON      "Max Channel",IDC_BUTTON_GETCHCOUNT,511,26,86,14
+    PUSHBUTTON      "Start Monitor",IDC_BUTTON_MONITOR,260,72,50,21
+    PUSHBUTTON      "Stop Monitor",IDC_BUTTON_STOPMONITOR,311,72,46,21
+    CONTROL         "",IDC_STATIC_WAVE,"Static",SS_BLACKRECT,7,197,593,36
+    PUSHBUTTON      "AD800_Init",IDC_BUTTON_OLDDLL_START,15,250,50,14
+    GROUPBOX        "OLD DLL",IDC_STATIC,7,236,593,68
+    PUSHBUTTON      "AD800_Free",IDC_BUTTON_OLDDLL_STOP,67,250,50,14,WS_DISABLED
+    PUSHBUTTON      "AD101_Init",IDC_BUTTON_OLDDLL_START2,15,269,50,14
+    PUSHBUTTON      "AD101_Free",IDC_BUTTON_OLDDLL_STOP2,67,269,50,14,WS_DISABLED
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904e4"
+        BEGIN
+            VALUE "CompanyName", "USBBOX"
+            VALUE "FileDescription", "USBBOX SDK DEMO"
+            VALUE "FileVersion", "1.0.0.1"
+            VALUE "InternalName", "UsbTest.exe"
+            VALUE "LegalCopyright", "SDK.  All rights reserved."
+            VALUE "OriginalFilename", "UsbTest.exe"
+            VALUE "ProductName", "SDK"
+            VALUE "ProductVersion", "1.0.0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 228
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 48
+    END
+
+    IDD_USBTEST_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 600
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 304
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_USBTEST_DIALOG DLGINIT
+BEGIN
+    IDC_COMBO1, 0x403, 9, 0
+0x5355, 0x2042, 0x4f42, 0x3158, "\000" 
+    IDC_COMBO1, 0x403, 9, 0
+0x5355, 0x2042, 0x4f42, 0x3258, "\000" 
+    IDC_COMBO1, 0x403, 9, 0
+0x5355, 0x2042, 0x4f42, 0x3458, "\000" 
+    IDC_COMBO1, 0x403, 8, 0
+0x5355, 0x4242, 0x584f, 0x0038, 
+    IDC_COMBO1, 0x403, 11, 0
+0x5355, 0x4242, 0x584f, 0x4520, 0x5241, "\000" 
+    IDC_COMBO2, 0x403, 3, 0
+0x3130, "\000" 
+    IDC_COMBO2, 0x403, 3, 0
+0x3230, "\000" 
+    IDC_COMBO2, 0x403, 3, 0
+0x3330, "\000" 
+    IDC_COMBO2, 0x403, 3, 0
+0x3430, "\000" 
+    IDC_COMBO2, 0x403, 3, 0
+0x3530, "\000" 
+    IDC_COMBO2, 0x403, 3, 0
+0x3630, "\000" 
+    IDC_COMBO2, 0x403, 3, 0
+0x3730, "\000" 
+    IDC_COMBO2, 0x403, 3, 0
+0x3830, "\000" 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDS_ABOUTBOX            "&About SDK Demo..."
+END
+
+#endif    // Chinese (P.R.C.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE 4, 2
+#pragma code_page(936)
+#include "res\UsbTest.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"     // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

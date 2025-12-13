@@ -1,0 +1,40 @@
+20241126 095525444
+start:message :wEventCode = 22 nReference = 0 dwParam = 0 dwDeviceID = 12345678
+20241126 095525452
+end:message :wEventCode = 22 nReference = 0 dwParam = 0 dwDeviceID = 12345678
+20241126 095529457
+start:message :wEventCode = 0 nReference = 0 dwParam = 2 dwDeviceID = 12345678
+20241126 095529462
+end:message :wEventCode = 0 nReference = 0 dwParam = 2 dwDeviceID = 12345678
+20241126 095529469
+start:message :wEventCode = 3 nReference = 0 dwParam = 3 dwDeviceID = 12345678
+20241126 095529471
+UsbBox_GetDtmfNumber &to=816&to_name=816
+20241126 095529475
+end:message :wEventCode = 3 nReference = 0 dwParam = 3 dwDeviceID = 12345678
+20241126 095531459
+start:message :wEventCode = 0 nReference = 0 dwParam = 5 dwDeviceID = 12345678
+20241126 095531464
+end:message :wEventCode = 0 nReference = 0 dwParam = 5 dwDeviceID = 12345678
+20241126 095538039
+start:callback event:wEventCode = 22 nReference = 0 dwParam = 0 dwDeviceID = 12345678
+20241126 095538045
+end:callback event:wEventCode = 22 nReference = 0 dwParam = 0 dwDeviceID = 12345678
+20241126 095542034
+start:callback event:wEventCode = 0 nReference = 0 dwParam = 2 dwDeviceID = 12345678
+20241126 095542039
+end:callback event:wEventCode = 0 nReference = 0 dwParam = 2 dwDeviceID = 12345678
+20241126 095542045
+start:callback event:wEventCode = 3 nReference = 0 dwParam = 3 dwDeviceID = 12345678
+20241126 095542048
+UsbBox_GetDtmfNumber &to=816&to_name=816
+20241126 095542051
+end:callback event:wEventCode = 3 nReference = 0 dwParam = 3 dwDeviceID = 12345678
+20241126 095543049
+start:callback event:wEventCode = 0 nReference = 0 dwParam = 5 dwDeviceID = 12345678
+20241126 095543053
+end:callback event:wEventCode = 0 nReference = 0 dwParam = 5 dwDeviceID = 12345678
+20241126 095544055
+start:callback event:wEventCode = 0 nReference = 0 dwParam = 1 dwDeviceID = 12345678
+20241126 095544061
+end:callback event:wEventCode = 0 nReference = 0 dwParam = 1 dwDeviceID = 12345678

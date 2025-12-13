@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UsbTest", "UsbTest\UsbTest.vcproj", "{775ADB51-C596-4E72-9BF2-AC892A88DE66}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "USBBoxProtocol", "USBBoxProtocol\USBBoxProtocol\USBBoxProtocol.vcproj", "{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+		X64_Debug|Win32 = X64_Debug|Win32
+		X64_Debug|x64 = X64_Debug|x64
+		X64_Release|Win32 = X64_Release|Win32
+		X64_Release|x64 = X64_Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.Debug|Win32.ActiveCfg = Debug|Win32
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.Debug|Win32.Build.0 = Debug|Win32
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.Debug|x64.ActiveCfg = Debug|x64
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.Debug|x64.Build.0 = Debug|x64
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.Release|Win32.ActiveCfg = Release|Win32
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.Release|Win32.Build.0 = Release|Win32
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.Release|x64.ActiveCfg = Release|x64
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.Release|x64.Build.0 = Release|x64
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.X64_Debug|Win32.ActiveCfg = X64_Debug|Win32
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.X64_Debug|Win32.Build.0 = X64_Debug|Win32
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.X64_Debug|x64.ActiveCfg = X64_Debug|x64
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.X64_Debug|x64.Build.0 = X64_Debug|x64
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.X64_Release|Win32.ActiveCfg = X64_Release|Win32
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.X64_Release|Win32.Build.0 = X64_Release|Win32
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.X64_Release|x64.ActiveCfg = X64_Release|x64
+		{775ADB51-C596-4E72-9BF2-AC892A88DE66}.X64_Release|x64.Build.0 = X64_Release|x64
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.Debug|Win32.Build.0 = Debug|Win32
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.Debug|x64.ActiveCfg = Debug|x64
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.Debug|x64.Build.0 = Debug|x64
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.Release|Win32.ActiveCfg = Release|Win32
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.Release|Win32.Build.0 = Release|Win32
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.Release|x64.ActiveCfg = Release|x64
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.Release|x64.Build.0 = Release|x64
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.X64_Debug|Win32.ActiveCfg = X64_Debug|Win32
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.X64_Debug|Win32.Build.0 = X64_Debug|Win32
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.X64_Debug|x64.ActiveCfg = X64_Debug|x64
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.X64_Debug|x64.Build.0 = X64_Debug|x64
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.X64_Release|Win32.ActiveCfg = X64_Release|Win32
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.X64_Release|Win32.Build.0 = X64_Release|Win32
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.X64_Release|x64.ActiveCfg = X64_Release|x64
+		{EF0EC366-39FA-4B27-8F9C-D7C1009256CF}.X64_Release|x64.Build.0 = X64_Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

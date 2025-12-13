@@ -1,0 +1,10 @@
+20241126 100850314
+callback event:wEventCode = 22 nReference = 0 dwParam = 0 dwDeviceID = 12345678
+20241126 100854281
+callback event:wEventCode = 0 nReference = 0 dwParam = 2 dwDeviceID = 12345678
+20241126 100854289
+callback event:wEventCode = 3 nReference = 0 dwParam = 3 dwDeviceID = 12345678
+20241126 100854292
+UsbBox_GetDtmfNumber &to=816&to_name=816
+20241126 100856326
+callback event:wEventCode = 0 nReference = 0 dwParam = 5 dwDeviceID = 12345678
