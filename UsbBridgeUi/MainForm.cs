@@ -160,10 +160,28 @@ public partial class MainForm : Form
         };
         dialButton.Click += DialButton_Click;
 
+        var titleLabel = new Label
+        {
+            Text = "USB Caller ID Test UI",
+            Location = new Point(10, 90),
+            Size = new Size(300, 25),
+            Font = new Font(Font.FontFamily, 12, FontStyle.Bold),
+            ForeColor = Color.DarkBlue
+        };
+
+        var developerLabel = new Label
+        {
+            Text = "Developed by Saqib Ali (mrsaqibale) - AD102 Bridge App",
+            Location = new Point(320, 92),
+            Size = new Size(550, 20),
+            Font = new Font(Font.FontFamily, 8, FontStyle.Italic),
+            ForeColor = Color.Gray
+        };
+
         var statusLabel = new Label
         {
             Text = "Line Status:",
-            Location = new Point(10, 90),
+            Location = new Point(10, 120),
             Size = new Size(100, 20),
             Font = new Font(Font.FontFamily, 9, FontStyle.Bold)
         };
