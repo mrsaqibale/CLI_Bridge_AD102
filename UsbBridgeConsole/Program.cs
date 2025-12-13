@@ -34,6 +34,12 @@ class Program
         _deviceService = new DeviceService();
         _deviceService.OnDeviceEvent += DeviceService_OnDeviceEvent;
 
+        // Write startup message to stderr (so it doesn't interfere with JSON output)
+        Console.Error.WriteLine("USB Bridge Console started. Waiting for JSON commands on stdin...");
+        Console.Error.WriteLine("Send commands like: {\"cmd\":\"usbbox.enable\",\"deviceType\":\"F2\"}");
+        Console.Error.WriteLine("Press Ctrl+C to exit.");
+        Console.Error.Flush();
+
         // Auto-start if configured
         var autoStart = Environment.GetEnvironmentVariable("USB_AUTO_START");
         if (autoStart == "1" || autoStart?.ToLower() == "true")
@@ -91,10 +97,18 @@ class Program
     private static void ReadCommands()
     {
         string? line;
-        while (_running && (line = Console.ReadLine()) != null)
+        while (_running)
         {
             try
             {
+                line = Console.ReadLine();
+                if (line == null)
+                {
+                    // stdin closed, exit
+                    _running = false;
+                    break;
+                }
+
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
 

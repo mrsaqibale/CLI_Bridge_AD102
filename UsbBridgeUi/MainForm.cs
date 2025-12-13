@@ -5,12 +5,12 @@ namespace UsbBridgeUi;
 public partial class MainForm : Form
 {
     private readonly DeviceService _deviceService;
-    private ListBox _logListBox;
-    private Panel _statusPanel;
-    private ComboBox _deviceTypeCombo;
-    private TextBox _lineTextBox;
-    private TextBox _dialNumberTextBox;
-    private Label _connectionStatusLabel;
+    private ListBox _logListBox = null!;
+    private Panel _statusPanel = null!;
+    private ComboBox _deviceTypeCombo = null!;
+    private TextBox _lineTextBox = null!;
+    private TextBox _dialNumberTextBox = null!;
+    private Label _connectionStatusLabel = null!;
 
     public MainForm()
     {
