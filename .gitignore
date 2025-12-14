@@ -24,6 +24,11 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+# Exception: Don't ignore Release build for deployment
+!CppBridge/bin/x64/Release/
+!CppBridge/bin/x64/Release/*.exe
+!CppBridge/bin/x64/Release/*.dll
+
 # Visual Studio cache/options directory
 .vs/
 
