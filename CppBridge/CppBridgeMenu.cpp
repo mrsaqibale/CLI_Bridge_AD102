@@ -41,13 +41,24 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
                 std::cout << "OFFHOOK";
                 break;
             case CH_STATE_RINGON:
-                std::cout << "RINGING";
-                // Try to get caller ID when ringing
                 {
+                    // RINGING - Show prominently with caller ID
                     char szCallerID[64] = {0};
                     if (UsbBox_GetCallerNumber(nReference, szCallerID) > 0)
                     {
-                        std::cout << " | Caller ID: " << szCallerID;
+                        std::cout << "\n" << std::string(50, '=') << std::endl;
+                        std::cout << "  INCOMING CALL - LINE " << nReference << std::endl;
+                        std::cout << "  CALLER ID: " << szCallerID << std::endl;
+                        std::cout << "  STATUS: RINGING" << std::endl;
+                        std::cout << std::string(50, '=') << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "\n" << std::string(50, '=') << std::endl;
+                        std::cout << "  INCOMING CALL - LINE " << nReference << std::endl;
+                        std::cout << "  CALLER ID: (Not available yet)" << std::endl;
+                        std::cout << "  STATUS: RINGING" << std::endl;
+                        std::cout << std::string(50, '=') << std::endl;
                     }
                 }
                 break;
