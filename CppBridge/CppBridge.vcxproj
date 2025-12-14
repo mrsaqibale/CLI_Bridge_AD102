@@ -81,7 +81,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CppBridge.cpp" />
-    <ClCompile Include="CppBridgeMenu.cpp" />
+    <ClCompile Include="CppBridgeMenu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\EN\64BIT\USBBoxProtocol.dll">
@@ -99,4 +101,3 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
-
