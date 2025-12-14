@@ -25,6 +25,15 @@ bld/
 [Ll]ogs/
 
 # Exception: Don't ignore Release build for deployment
+# Must un-ignore parent directories first, then files
+!CppBridge/
+!CppBridge/bin/
+!CppBridge/bin/x64/
+!CppBridge/bin/x64/Release/
+!CppBridge/bin/x64/Release/*.exe
+!CppBridge/bin/x64/Release/*.dll
+
+# Exception: Don't ignore Release build for deployment
 !CppBridge/bin/x64/Release/
 !CppBridge/bin/x64/Release/*.exe
 !CppBridge/bin/x64/Release/*.dll
