@@ -7,8 +7,13 @@
 #include <windows.h>
 #include <conio.h>
 
+// Suppress warnings
+#pragma warning(disable: 6031)  // Return value ignored for _getch
+#pragma warning(push)
+#pragma warning(disable: 4091)   // typedef ignored warning
 // Include the USBBox protocol header
 #include "../EN/64BIT/USBBoxProtocol.h"
+#pragma warning(pop)
 
 // Link the library
 #pragma comment(lib, "../EN/64BIT/USBBoxProtocol.lib")
@@ -238,7 +243,7 @@ void DisableDevice()
     g_bEnabled = false;
     std::cout << "✓ Device disabled." << std::endl;
     std::cout << "Press any key to continue..." << std::endl;
-    _getch();
+    (void)_getch();
 }
 
 // Pickup line
@@ -275,7 +280,7 @@ void PickupLine()
     }
     
     std::cout << "Press any key to continue..." << std::endl;
-    _getch();
+    (void)_getch();
 }
 
 // Hang up (Hook On)
@@ -312,7 +317,7 @@ void HangUp()
     }
     
     std::cout << "Press any key to continue..." << std::endl;
-    _getch();
+    (void)_getch();
 }
 
 // Dial number
@@ -356,7 +361,7 @@ void DialNumber()
     }
     
     std::cout << "Press any key to continue..." << std::endl;
-    _getch();
+    (void)_getch();
 }
 
 // Get device status
@@ -429,7 +434,7 @@ void GetDeviceStatus()
     
     std::cout << std::endl;
     std::cout << "Press any key to continue..." << std::endl;
-    _getch();
+    (void)_getch();
 }
 
 int main(int argc, char* argv[])
