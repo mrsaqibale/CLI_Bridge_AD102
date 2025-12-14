@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cstring>
 #include <windows.h>
 
 // Include the USBBox protocol header
@@ -37,7 +38,7 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
             if (state == CH_STATE_RINGON)
             {
                 char szCallerID[64] = {0};
-                if (UsbBox_GetCallerNumber(nReference, szCallerID, 64) > 0)
+                if (UsbBox_GetCallerNumber(nReference, szCallerID) > 0)
                 {
                     std::cout << ",\"callerId\":\"" << szCallerID << "\"";
                 }
@@ -53,7 +54,7 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
     case EVENT_CALLERID:
         {
             char szCallerID[64] = {0};
-            if (UsbBox_GetCallerNumber(nReference, szCallerID, 64) > 0)
+            if (UsbBox_GetCallerNumber(nReference, szCallerID) > 0)
             {
                 std::cout << ",\"callerId\":\"" << szCallerID << "\"";
             }
@@ -64,18 +65,18 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
     case EVENT_DTMF:
         {
             char szDTMF[64] = {0};
-            if (UsbBox_GetDtmfNumber(nReference, szDTMF, 64) > 0)
+            if (UsbBox_GetDtmfNumber(nReference, szDTMF) > 0)
             {
                 std::cout << ",\"dtmf\":\"" << szDTMF << "\"";
             }
         }
         break;
         
-    case USBBOX_PLUG_IN:
+    case EVENT_USBCONNECT:
         std::cout << ",\"status\":\"Connected\"";
         break;
         
-    case USBBOX_PLUG_OUT:
+    case EVENT_USBDISCONNECT:
         std::cout << ",\"status\":\"Disconnected\"";
         break;
     }
@@ -174,7 +175,11 @@ void ProcessCommand(const std::string& jsonLine)
         
         if (!number.empty())
         {
-            int result = UsbBox_Diall(line, number.c_str());
+            // UsbBox_Diall requires non-const char*, so copy to buffer
+            char dialBuffer[256] = {0};
+            strncpy_s(dialBuffer, number.c_str(), sizeof(dialBuffer) - 1);
+            
+            int result = UsbBox_Diall(line, dialBuffer);
             std::cout << "{\"type\":\"result\",\"ok\":" << (result == 0 ? "true" : "false") 
                       << ",\"cmd\":\"dial\"}" << std::endl;
         }
