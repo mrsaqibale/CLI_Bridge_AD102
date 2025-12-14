@@ -82,6 +82,20 @@
   <ItemGroup>
     <ClCompile Include="CppBridge.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\EN\64BIT\USBBoxProtocol.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\EN\64BIT\AD101Device.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\EN\64BIT\AD800Device.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\EN\64BIT\lame_enc.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
 
