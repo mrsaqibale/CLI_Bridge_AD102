@@ -20,172 +20,53 @@ static int g_nDeviceType = USBBOX_TYPE_F2; // Default F2
 // Callback function - outputs JSON to stdout
 void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, DWORD dwDeviceID)
 {
-    // Output JSON event to stdout
-    std::cout << "{\"type\":\"event\",\"eventCode\":" << wEventCode 
-              << ",\"line\":" << nReference 
-              << ",\"param\":" << dwParam
-              << ",\"deviceID\":" << dwDeviceID;
-    
-    // Add event-specific data
     switch (wEventCode)
     {
     case EVENT_STATE:
         {
             int state = (int)dwParam;
-            std::cout << ",\"state\":" << state;
             
-            // Try to get caller ID when ringing
+            // Call comes - RINGING
             if (state == CH_STATE_RINGON)
             {
                 char szCallerID[64] = {0};
                 if (UsbBox_GetCallerNumber(nReference, szCallerID) > 0)
                 {
-                    std::cout << ",\"callerId\":\"" << szCallerID << "\"";
+                    // Send JSON: Call comes with phone number
+                    std::cout << "{\"type\":\"event\",\"status\":\"Ring\",\"line\":" << nReference 
+                              << ",\"callerId\":\"" << szCallerID << "\"}" << std::endl;
                 }
-                std::cout << ",\"status\":\"Ringing\"";
+                else
+                {
+                    // Send JSON: Call comes but no caller ID yet
+                    std::cout << "{\"type\":\"event\",\"status\":\"Ring\",\"line\":" << nReference 
+                              << ",\"callerId\":\"\"}" << std::endl;
+                }
+                std::cout.flush();
             }
+            // Call end - FREE
             else if (state == CH_STATE_HOOKON)
             {
-                std::cout << ",\"status\":\"Free\"";
+                // Send JSON: Call end
+                std::cout << "{\"type\":\"event\",\"status\":\"Free\",\"line\":" << nReference << "}" << std::endl;
+                std::cout.flush();
             }
         }
         break;
         
     case EVENT_CALLERID:
         {
+            // If caller ID comes after ringing started, send update
             char szCallerID[64] = {0};
             if (UsbBox_GetCallerNumber(nReference, szCallerID) > 0)
             {
-                std::cout << ",\"callerId\":\"" << szCallerID << "\"";
-            }
-            std::cout << ",\"status\":\"CallerID\"";
-        }
-        break;
-        
-    case EVENT_DTMF:
-        {
-            char szDTMF[64] = {0};
-            if (UsbBox_GetDtmfNumber(nReference, szDTMF) > 0)
-            {
-                std::cout << ",\"dtmf\":\"" << szDTMF << "\"";
+                std::cout << "{\"type\":\"event\",\"status\":\"Ring\",\"line\":" << nReference 
+                          << ",\"callerId\":\"" << szCallerID << "\"}" << std::endl;
+                std::cout.flush();
             }
         }
         break;
-        
-    case EVENT_USBCONNECT:
-        std::cout << ",\"status\":\"Connected\"";
-        break;
-        
-    case EVENT_USBDISCONNECT:
-        std::cout << ",\"status\":\"Disconnected\"";
-        break;
     }
-    
-    std::cout << "}" << std::endl;
-    std::cout.flush();
-}
-
-// Process JSON command from stdin
-void ProcessCommand(const std::string& jsonLine)
-{
-    // Simple JSON parsing (for production, use a proper JSON library)
-    // For now, just check for basic commands
-    
-    if (jsonLine.find("\"cmd\":\"enable\"") != std::string::npos)
-    {
-        // Extract deviceType if present
-        size_t pos = jsonLine.find("\"deviceType\":\"F");
-        if (pos != std::string::npos)
-        {
-            char type = jsonLine[pos + 13]; // "F" + digit
-            g_nDeviceType = (type == '1') ? USBBOX_TYPE_F1 :
-                          (type == '2') ? USBBOX_TYPE_F2 :
-                          (type == '4') ? USBBOX_TYPE_F4 :
-                          (type == '8') ? USBBOX_TYPE_F8 : USBBOX_TYPE_F2;
-        }
-        
-        // Enable device (same pattern as working demos)
-        int result = UsbBox_EnableDevice();
-        if (result == 0)
-        {
-            UsbBox_EventCallBack(USBEventCallback);
-            UsbBox_SetDeviceType(g_nDeviceType);
-            g_bEnabled = true;
-            
-            std::cout << "{\"type\":\"result\",\"ok\":true,\"cmd\":\"enable\"}" << std::endl;
-        }
-        else
-        {
-            std::cout << "{\"type\":\"result\",\"ok\":false,\"cmd\":\"enable\",\"error\":" << result << "}" << std::endl;
-        }
-    }
-    else if (jsonLine.find("\"cmd\":\"disable\"") != std::string::npos)
-    {
-        UsbBox_DisableDevice();
-        g_bEnabled = false;
-        std::cout << "{\"type\":\"result\",\"ok\":true,\"cmd\":\"disable\"}" << std::endl;
-    }
-    else if (jsonLine.find("\"cmd\":\"pickup\"") != std::string::npos)
-    {
-        // Extract line number
-        int line = 0;
-        size_t pos = jsonLine.find("\"line\":");
-        if (pos != std::string::npos)
-        {
-            line = std::stoi(jsonLine.substr(pos + 7));
-        }
-        
-        int result = UsbBox_Pickup(line);
-        std::cout << "{\"type\":\"result\",\"ok\":" << (result == 0 ? "true" : "false") 
-                  << ",\"cmd\":\"pickup\"}" << std::endl;
-    }
-    else if (jsonLine.find("\"cmd\":\"hookon\"") != std::string::npos)
-    {
-        int line = 0;
-        size_t pos = jsonLine.find("\"line\":");
-        if (pos != std::string::npos)
-        {
-            line = std::stoi(jsonLine.substr(pos + 7));
-        }
-        
-        int result = UsbBox_HookOn(line);
-        std::cout << "{\"type\":\"result\",\"ok\":" << (result == 0 ? "true" : "false") 
-                  << ",\"cmd\":\"hookon\"}" << std::endl;
-    }
-    else if (jsonLine.find("\"cmd\":\"dial\"") != std::string::npos)
-    {
-        int line = 0;
-        std::string number;
-        
-        size_t linePos = jsonLine.find("\"line\":");
-        if (linePos != std::string::npos)
-        {
-            line = std::stoi(jsonLine.substr(linePos + 7));
-        }
-        
-        size_t numPos = jsonLine.find("\"number\":\"");
-        if (numPos != std::string::npos)
-        {
-            size_t numEnd = jsonLine.find("\"", numPos + 10);
-            if (numEnd != std::string::npos)
-            {
-                number = jsonLine.substr(numPos + 10, numEnd - numPos - 10);
-            }
-        }
-        
-        if (!number.empty())
-        {
-            // UsbBox_Diall requires non-const char*, so copy to buffer
-            char dialBuffer[256] = {0};
-            strncpy_s(dialBuffer, number.c_str(), sizeof(dialBuffer) - 1);
-            
-            int result = UsbBox_Diall(line, dialBuffer);
-            std::cout << "{\"type\":\"result\",\"ok\":" << (result == 0 ? "true" : "false") 
-                      << ",\"cmd\":\"dial\"}" << std::endl;
-        }
-    }
-    
-    std::cout.flush();
 }
 
 int main(int argc, char* argv[])
@@ -194,17 +75,35 @@ int main(int argc, char* argv[])
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
     
-    std::cerr << "USB Bridge Console (C++) started." << std::endl;
-    std::cerr << "Waiting for JSON commands on stdin..." << std::endl;
-    std::cerr.flush();
-    
-    // Read commands from stdin line by line
-    std::string line;
-    while (std::getline(std::cin, line))
+    // Auto-enable device on startup (F2)
+    g_nDeviceType = USBBOX_TYPE_F2;
+    int result = UsbBox_EnableDevice();
+    if (result == 0)
     {
-        if (!line.empty() && line[0] == '{')
+        UsbBox_EventCallBack(USBEventCallback);
+        UsbBox_SetDeviceType(g_nDeviceType);
+        g_bEnabled = true;
+        
+        // Send ready status to stderr (not JSON output)
+        std::cerr << "USB Bridge started. Device enabled (F2). Listening for calls..." << std::endl;
+        std::cerr.flush();
+    }
+    else
+    {
+        std::cerr << "Failed to enable device. Error: " << result << std::endl;
+        std::cerr.flush();
+        return 1;
+    }
+    
+    // Keep running and listening for events
+    // Events are sent via callback to stdout as JSON
+    while (true)
+    {
+        Sleep(1000); // Sleep to keep process alive
+        // Check if stdin is closed (for pipe detection)
+        if (std::cin.eof())
         {
-            ProcessCommand(line);
+            break;
         }
     }
     
