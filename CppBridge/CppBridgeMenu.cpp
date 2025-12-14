@@ -84,29 +84,35 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
             char szDTMF[64] = {0};
             if (UsbBox_GetDtmfNumber(nReference, szDTMF) > 0)
             {
-                std::cout << " | DTMF: " << szDTMF;
+                std::cout << "\n[LINE " << nReference << "] DTMF Digits: " << szDTMF << std::endl;
             }
         }
         break;
         
     case EVENT_USBCONNECT:
-        std::cout << " | USB Device CONNECTED";
+        std::cout << "\n✓ USB Device CONNECTED" << std::endl;
         break;
         
     case EVENT_USBDISCONNECT:
-        std::cout << " | USB Device DISCONNECTED";
+        std::cout << "\n✗ USB Device DISCONNECTED" << std::endl;
         break;
         
     case EVENT_VOLTAGE:
-        std::cout << " | Voltage: " << dwParam << "V";
+        // Don't show voltage events (too frequent)
         break;
         
     case EVENT_RINGCOUNT:
-        std::cout << " | Ring Count: " << dwParam;
+        // Ring count shown with ringing state, don't duplicate
+        break;
+        
+    case EVENT_MISSEDINBOUNDCALL:
+        std::cout << "\n[LINE " << nReference << "] ⚠ MISSED CALL" << std::endl;
+        break;
+        
+    default:
+        // Other events - minimal display
         break;
     }
-    
-    std::cout << std::endl;
 }
 
 // Clear screen
@@ -441,6 +447,40 @@ int main(int argc, char* argv[])
 {
     // Set console title
     SetConsoleTitle(L"USB Caller ID Bridge - Menu");
+    
+    // Auto-enable device on startup (F2)
+    std::cout << "========================================" << std::endl;
+    std::cout << "    USB Caller ID Bridge - Menu" << std::endl;
+    std::cout << "    Developed by Saqib Ali (mrsaqibale)" << std::endl;
+    std::cout << "========================================" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Auto-enabling device (F2)..." << std::endl;
+    
+    g_nDeviceType = USBBOX_TYPE_F2;
+    int result = UsbBox_EnableDevice();
+    if (result == 0)
+    {
+        UsbBox_EventCallBack(USBEventCallback);
+        UsbBox_SetDeviceType(g_nDeviceType);
+        g_bEnabled = true;
+        
+        int deviceCount = UsbBox_GetDeviceCount();
+        int channelCount = UsbBox_GetChannelCount();
+        
+        std::cout << "✓ Device enabled successfully!" << std::endl;
+        std::cout << "  Device Count: " << deviceCount << std::endl;
+        std::cout << "  Channel Count: " << channelCount << std::endl;
+        std::cout << std::endl;
+        std::cout << "Waiting for incoming calls..." << std::endl;
+        std::cout << "========================================" << std::endl;
+        std::cout << std::endl;
+    }
+    else
+    {
+        std::cout << "✗ Failed to enable device. Error code: " << result << std::endl;
+        std::cout << "  Make sure USB device is connected." << std::endl;
+        std::cout << std::endl;
+    }
     
     int choice;
     bool running = true;
