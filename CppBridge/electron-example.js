@@ -12,17 +12,18 @@ class UsbBridge {
     }
 
     start() {
-        // Path to the C++ bridge EXE
+        // Path to the C++ bridge EXE (auto-runs in background)
         const bridgePath = path.join(__dirname, 'bin', 'x64', 'Release', 'CppBridge.exe');
         
-        console.log('[Bridge] Starting C++ bridge...');
+        console.log('[Bridge] Starting C++ bridge in background...');
         console.log('[Bridge] Path:', bridgePath);
         
-        // Spawn the EXE in background
+        // Spawn the EXE in background (auto-enables device)
         this.bridge = spawn(bridgePath, [], {
             stdio: ['ignore', 'pipe', 'pipe'], // stdin ignored, stdout/stderr piped
             cwd: path.dirname(bridgePath),
-            detached: false // Keep attached to parent process
+            detached: false, // Keep attached to parent process
+            windowsHide: true // Hide console window on Windows
         });
 
         // Handle stdout (JSON events)
@@ -70,15 +71,17 @@ class UsbBridge {
         this.isRunning = true;
         
         return new Promise((resolve, reject) => {
-            // Wait a bit for bridge to initialize
+            // Wait a bit for bridge to initialize and auto-enable device
             setTimeout(() => {
                 if (this.isRunning) {
-                    console.log('[Bridge] Ready! Listening for calls...');
+                    console.log('[Bridge] ✓ Ready!');
+                    console.log('[Bridge] ✓ Device auto-enabled (F2)');
+                    console.log('[Bridge] ✓ Listening for incoming calls...\n');
                     resolve();
                 } else {
                     reject(new Error('Bridge failed to start'));
                 }
-            }, 1000);
+            }, 1500); // Give more time for device initialization
         });
     }
 
@@ -99,16 +102,19 @@ class UsbBridge {
         // Process the event
         if (event.type === 'event') {
             if (event.status === 'Ring') {
-                // Call comes - display caller ID
+                // Call comes - display caller ID prominently
                 const callerId = event.callerId || 'Unknown';
                 const line = event.line || 0;
-                console.log(`\n📞 INCOMING CALL - LINE ${line}`);
-                console.log(`📱 CALL FROM: ${callerId}`);
-                console.log(`🔔 STATUS: RINGING\n`);
+                
+                console.log('\n' + '='.repeat(50));
+                console.log(`📞 INCOMING CALL - LINE ${line}`);
+                console.log(`📱 CALL FROM THIS NUMBER: ${callerId}`);
+                console.log(`🔔 STATUS: RINGING`);
+                console.log('='.repeat(50) + '\n');
             } else if (event.status === 'Free') {
                 // Call ends
                 const line = event.line || 0;
-                console.log(`\n✓ Call ended on line ${line}\n`);
+                console.log(`\n✓ Call ended on line ${line} (Line is now FREE)\n`);
             }
         }
         
@@ -130,15 +136,22 @@ async function main() {
     // Register event handler for custom processing
     bridge.onEvent((event) => {
         // You can add custom logic here
-        // For example, update UI, save to database, etc.
+        // For example, update UI, save to database, send notifications, etc.
+        if (event.type === 'event' && event.status === 'Ring') {
+            // Example: You could trigger UI updates, notifications, etc.
+            // updateUI(event);
+            // saveToDatabase(event);
+            // sendNotification(`Call from ${event.callerId}`);
+        }
     });
     
     try {
-        // Start bridge (auto-enables device)
+        // Start bridge (auto-runs EXE in background, auto-enables device)
         await bridge.start();
         
         console.log('USB Bridge is running in background.');
-        console.log('Waiting for incoming calls...\n');
+        console.log('The EXE file is auto-running and listening for calls.');
+        console.log('When a call comes, you will see: "CALL FROM THIS NUMBER: [number]"\n');
         
         // Keep process alive
         process.on('SIGINT', () => {
