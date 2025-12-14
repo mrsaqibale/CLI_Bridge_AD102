@@ -26,11 +26,6 @@ static int g_nCurrentLine = 0;
 // Callback function - displays events to console
 void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, DWORD dwDeviceID)
 {
-    // Display event information
-    std::cout << "\n[EVENT] Code: " << wEventCode 
-              << " | Line: " << nReference 
-              << " | Param: " << dwParam;
-    
     switch (wEventCode)
     {
     case EVENT_STATE:
@@ -40,7 +35,7 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
             switch (state)
             {
             case CH_STATE_HOOKON:
-                std::cout << "FREE (Hook On)";
+                // Don't show FREE status (too frequent)
                 break;
             case CH_STATE_HOOKOFF:
                 std::cout << "OFFHOOK";
@@ -74,7 +69,10 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
             char szCallerID[64] = {0};
             if (UsbBox_GetCallerNumber(nReference, szCallerID) > 0)
             {
-                std::cout << " | Caller ID: " << szCallerID;
+                std::cout << "\n" << std::string(50, '=') << std::endl;
+                std::cout << "  CALLER ID RECEIVED - LINE " << nReference << std::endl;
+                std::cout << "  NUMBER: " << szCallerID << std::endl;
+                std::cout << std::string(50, '=') << std::endl;
             }
         }
         break;
@@ -106,7 +104,7 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
         break;
         
     case EVENT_MISSEDINBOUNDCALL:
-        std::cout << "\n[LINE " << nReference << "] ⚠ MISSED CALL" << std::endl;
+        std::cout << "\n[LINE " << nReference << "] MISSED CALL" << std::endl;
         break;
         
     default:
