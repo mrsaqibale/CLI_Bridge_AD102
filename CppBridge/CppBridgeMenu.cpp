@@ -229,7 +229,7 @@ void DisableDevice()
     {
         std::cout << "Device is already disabled." << std::endl;
         std::cout << "Press any key to continue..." << std::endl;
-        _getch();
+        (void)_getch();
         return;
     }
     
@@ -254,7 +254,7 @@ void PickupLine()
     {
         std::cout << "Error: Device is not enabled!" << std::endl;
         std::cout << "Press any key to continue..." << std::endl;
-        _getch();
+        (void)_getch();
         return;
     }
     
@@ -291,7 +291,7 @@ void HangUp()
     {
         std::cout << "Error: Device is not enabled!" << std::endl;
         std::cout << "Press any key to continue..." << std::endl;
-        _getch();
+        (void)_getch();
         return;
     }
     
@@ -328,7 +328,7 @@ void DialNumber()
     {
         std::cout << "Error: Device is not enabled!" << std::endl;
         std::cout << "Press any key to continue..." << std::endl;
-        _getch();
+        (void)_getch();
         return;
     }
     
@@ -372,7 +372,7 @@ void GetDeviceStatus()
     {
         std::cout << "Device is not enabled." << std::endl;
         std::cout << "Press any key to continue..." << std::endl;
-        _getch();
+        (void)_getch();
         return;
     }
     
