@@ -81,6 +81,8 @@ class Program
                 callerId = e.CallerId,
                 dtmf = e.Dtmf,
                 meaning = e.Meaning,
+                duration = e.Duration,
+                callType = e.CallType,
                 ts = e.Timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
             };
 

@@ -94,6 +94,7 @@ public class DeviceService
                 // When state changes to Ring, try to get caller ID immediately
                 else if (state == ChannelState.RingOn)
                 {
+                    evt.CallType = "Inbound";
                     evt.Meaning = "RINGING - Attempting to get caller ID...";
                     // Try to get caller ID when ringing starts
                     var ringCallerId = GetCallerId(line);
@@ -103,6 +104,15 @@ public class DeviceService
                         evt.CallerId = ringCallerId;
                         evt.Meaning = $"RINGING - Caller ID: {ringCallerId}";
                     }
+                }
+                // When call is active, determine call type
+                else if (state == ChannelState.InRecord)
+                {
+                    evt.CallType = "Inbound";
+                }
+                else if (state == ChannelState.OutRecord)
+                {
+                    evt.CallType = "Outbound";
                 }
                 break;
             case UsbBoxEventCode.CallerId:
@@ -145,6 +155,37 @@ public class DeviceService
             case UsbBoxEventCode.Voltage:
                 lineInfo.Voltage = (int)evt.Param;
                 evt.Meaning = $"Voltage changed to {evt.Param}V";
+                break;
+            case UsbBoxEventCode.MissedInboundCall:
+                var missedCallerId = GetCallerId(line);
+                if (!string.IsNullOrEmpty(missedCallerId))
+                {
+                    lineInfo.LastCallerId = missedCallerId;
+                    evt.CallerId = missedCallerId;
+                }
+                evt.Status = "Missed";
+                evt.CallType = "Inbound";
+                evt.Meaning = $"Missed inbound call{(string.IsNullOrEmpty(missedCallerId) ? "" : $" from {missedCallerId}")}";
+                break;
+            case UsbBoxEventCode.RecordTime:
+                var recordTime = GetRecordTime(line);
+                if (recordTime >= 0)
+                {
+                    evt.Duration = recordTime;
+                    evt.Meaning = $"Call duration: {recordTime} ms";
+                    if (lineInfo.Status == LineStatus.InCall)
+                    {
+                        var currentState = GetState(line);
+                        if (currentState == (int)ChannelState.InRecord)
+                        {
+                            evt.CallType = "Inbound";
+                        }
+                        else if (currentState == (int)ChannelState.OutRecord)
+                        {
+                            evt.CallType = "Outbound";
+                        }
+                    }
+                }
                 break;
         }
     }
@@ -344,6 +385,18 @@ public class DeviceService
         try
         {
             return UsbBoxInterop.UsbBox_GetState(line);
+        }
+        catch
+        {
+            return -1;
+        }
+    }
+
+    public int GetRecordTime(int line)
+    {
+        try
+        {
+            return UsbBoxInterop.UsbBox_GetRecordTime(line);
         }
         catch
         {

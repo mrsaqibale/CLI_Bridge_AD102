@@ -17,9 +17,44 @@
 static bool g_bEnabled = false;
 static int g_nDeviceType = USBBOX_TYPE_F2; // Default F2
 
+// Helper function to get current timestamp in ISO 8601 format
+std::string GetCurrentTimestamp()
+{
+    SYSTEMTIME st;
+    GetSystemTime(&st);
+    char buffer[32];
+    sprintf_s(buffer, sizeof(buffer), "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
+        st.wYear, st.wMonth, st.wDay,
+        st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+    return std::string(buffer);
+}
+
+// Escape JSON string
+std::string EscapeJsonString(const char* str)
+{
+    std::string result;
+    for (const char* p = str; *p; ++p)
+    {
+        switch (*p)
+        {
+        case '"': result += "\\\""; break;
+        case '\\': result += "\\\\"; break;
+        case '\b': result += "\\b"; break;
+        case '\f': result += "\\f"; break;
+        case '\n': result += "\\n"; break;
+        case '\r': result += "\\r"; break;
+        case '\t': result += "\\t"; break;
+        default: result += *p; break;
+        }
+    }
+    return result;
+}
+
 // Callback function - outputs JSON to stdout
 void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, DWORD dwDeviceID)
 {
+    std::string timestamp = GetCurrentTimestamp();
+    
     switch (wEventCode)
     {
     case EVENT_STATE:
@@ -30,25 +65,40 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
             if (state == CH_STATE_RINGON)
             {
                 char szCallerID[64] = {0};
+                std::string callerIdStr = "";
                 if (UsbBox_GetCallerNumber(nReference, szCallerID) > 0)
                 {
-                    // Send JSON: Call comes with phone number
-                    std::cout << "{\"type\":\"event\",\"status\":\"Ring\",\"line\":" << nReference 
-                              << ",\"callerId\":\"" << szCallerID << "\"}" << std::endl;
+                    callerIdStr = EscapeJsonString(szCallerID);
                 }
-                else
-                {
-                    // Send JSON: Call comes but no caller ID yet
-                    std::cout << "{\"type\":\"event\",\"status\":\"Ring\",\"line\":" << nReference 
-                              << ",\"callerId\":\"\"}" << std::endl;
-                }
+                
+                std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" << nReference 
+                          << ",\"param\":" << state << ",\"deviceId\":" << dwDeviceID
+                          << ",\"status\":\"Ringing\",\"callerId\":\"" << callerIdStr 
+                          << "\",\"callType\":\"Inbound\",\"ts\":\"" << timestamp << "\"}" << std::endl;
+                std::cout.flush();
+            }
+            // Call active - INBOUND RECORD
+            else if (state == CH_STATE_INRECORD)
+            {
+                std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" << nReference 
+                          << ",\"param\":" << state << ",\"deviceId\":" << dwDeviceID
+                          << ",\"status\":\"InCall\",\"callType\":\"Inbound\",\"ts\":\"" << timestamp << "\"}" << std::endl;
+                std::cout.flush();
+            }
+            // Call active - OUTBOUND RECORD
+            else if (state == CH_STATE_OUTRECORD)
+            {
+                std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" << nReference 
+                          << ",\"param\":" << state << ",\"deviceId\":" << dwDeviceID
+                          << ",\"status\":\"InCall\",\"callType\":\"Outbound\",\"ts\":\"" << timestamp << "\"}" << std::endl;
                 std::cout.flush();
             }
             // Call end - FREE
             else if (state == CH_STATE_HOOKON)
             {
-                // Send JSON: Call end
-                std::cout << "{\"type\":\"event\",\"status\":\"Free\",\"line\":" << nReference << "}" << std::endl;
+                std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" << nReference 
+                          << ",\"param\":" << state << ",\"deviceId\":" << dwDeviceID
+                          << ",\"status\":\"Free\",\"ts\":\"" << timestamp << "\"}" << std::endl;
                 std::cout.flush();
             }
         }
@@ -56,14 +106,66 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
         
     case EVENT_CALLERID:
         {
-            // If caller ID comes after ringing started, send update
             char szCallerID[64] = {0};
+            std::string callerIdStr = "";
             if (UsbBox_GetCallerNumber(nReference, szCallerID) > 0)
             {
-                std::cout << "{\"type\":\"event\",\"status\":\"Ring\",\"line\":" << nReference 
-                          << ",\"callerId\":\"" << szCallerID << "\"}" << std::endl;
+                callerIdStr = EscapeJsonString(szCallerID);
+            }
+            
+            std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":2,\"line\":" << nReference 
+                      << ",\"param\":0,\"deviceId\":" << dwDeviceID
+                      << ",\"callerId\":\"" << callerIdStr << "\",\"callType\":\"Inbound\",\"ts\":\"" << timestamp << "\"}" << std::endl;
+            std::cout.flush();
+        }
+        break;
+        
+    case EVENT_RECORDTIME:
+        {
+            int recordTime = UsbBox_GetRecordTime(nReference);
+            if (recordTime >= 0)
+            {
+                int currentState = UsbBox_GetState(nReference);
+                std::string callType = "Unknown";
+                if (currentState == CH_STATE_INRECORD)
+                {
+                    callType = "Inbound";
+                }
+                else if (currentState == CH_STATE_OUTRECORD)
+                {
+                    callType = "Outbound";
+                }
+                
+                std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" << nReference 
+                          << ",\"param\":0,\"deviceId\":" << dwDeviceID
+                          << ",\"duration\":" << recordTime << ",\"callType\":\"" << callType 
+                          << "\",\"meaning\":\"Call duration: " << recordTime << " ms\",\"ts\":\"" << timestamp << "\"}" << std::endl;
                 std::cout.flush();
             }
+        }
+        break;
+        
+    case EVENT_MISSEDINBOUNDCALL:
+        {
+            char szCallerID[64] = {0};
+            std::string callerIdStr = "";
+            if (UsbBox_GetCallerNumber(nReference, szCallerID) > 0)
+            {
+                callerIdStr = EscapeJsonString(szCallerID);
+            }
+            
+            std::string meaning = "Missed inbound call";
+            if (!callerIdStr.empty())
+            {
+                meaning += " from " + callerIdStr;
+            }
+            
+            std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":11,\"line\":" << nReference 
+                      << ",\"param\":0,\"deviceId\":" << dwDeviceID
+                      << ",\"status\":\"Missed\",\"callerId\":\"" << callerIdStr 
+                      << "\",\"callType\":\"Inbound\",\"meaning\":\"" << EscapeJsonString(meaning.c_str()) 
+                      << "\",\"ts\":\"" << timestamp << "\"}" << std::endl;
+            std::cout.flush();
         }
         break;
     }

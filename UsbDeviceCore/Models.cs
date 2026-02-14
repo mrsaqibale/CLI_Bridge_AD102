@@ -12,6 +12,8 @@ public class DeviceEvent
     public string? Dtmf { get; set; }
     public string? Status { get; set; }
     public string? Meaning { get; set; }
+    public long? Duration { get; set; }
+    public string? CallType { get; set; }
 }
 
 public class LineInfo
