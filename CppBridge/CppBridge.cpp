@@ -6,6 +6,8 @@
 #include <sstream>
 #include <cstring>
 #include <windows.h>
+#include <fstream>
+#include <ctime>
 
 // Include the USBBox protocol header
 #include "../EN/64BIT/USBBoxProtocol.h"
@@ -19,6 +21,50 @@ static int g_nDeviceType = USBBOX_TYPE_F2; // Default F2
 
 // Track call state per line to determine call type when call ends
 static int g_lineCallState[8] = {0}; // Track state for up to 8 lines
+
+// Log file
+static std::ofstream g_logFile;
+static bool g_logFileOpen = false;
+
+// Helper to write to log file
+void WriteToLog(const std::string& message) {
+    if (!g_logFileOpen) {
+        // Open log file in append mode
+        char logPath[MAX_PATH];
+        GetModuleFileNameA(NULL, logPath, MAX_PATH);
+        std::string exePath = logPath;
+        size_t lastSlash = exePath.find_last_of("\\/");
+        std::string logFilePath = (lastSlash != std::string::npos) 
+            ? exePath.substr(0, lastSlash + 1) + "CppBridge.log"
+            : "CppBridge.log";
+        
+        g_logFile.open(logFilePath, std::ios::app);
+        g_logFileOpen = g_logFile.is_open();
+    }
+    
+    if (g_logFileOpen) {
+        SYSTEMTIME st;
+        GetLocalTime(&st);
+        char timeStr[32];
+        sprintf_s(timeStr, sizeof(timeStr), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
+            st.wYear, st.wMonth, st.wDay,
+            st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+        
+        g_logFile << "[" << timeStr << "] " << message << std::endl;
+        g_logFile.flush();
+    }
+    
+    // Also write to stderr for console output
+    std::cerr << message << std::endl;
+    std::cerr.flush();
+}
+
+// Helper to output JSON and log it
+void OutputJson(const std::string& json) {
+    std::cout << json << std::endl;
+    std::cout.flush();
+    WriteToLog("JSON: " + json);
+}
 
 // Helper function to get current timestamp in ISO 8601 format
 std::string GetCurrentTimestamp()
@@ -58,6 +104,12 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
 {
     std::string timestamp = GetCurrentTimestamp();
     
+    // Log callback received
+    char logMsg[256];
+    sprintf_s(logMsg, sizeof(logMsg), "CALLBACK: eventCode=%d, line=%d, param=%lu, deviceId=%lu", 
+        wEventCode, nReference, dwParam, dwDeviceID);
+    WriteToLog(logMsg);
+    
     switch (wEventCode)
     {
     case EVENT_STATE:
@@ -74,11 +126,11 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
                     callerIdStr = EscapeJsonString(szCallerID);
                 }
                 
-                std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" << nReference 
-                          << ",\"param\":" << state << ",\"deviceId\":" << dwDeviceID
-                          << ",\"status\":\"Ringing\",\"callerId\":\"" << callerIdStr 
-                          << "\",\"callType\":\"Inbound\",\"ts\":\"" << timestamp << "\"}" << std::endl;
-                std::cout.flush();
+                std::string json = "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" + std::to_string(nReference) 
+                          + ",\"param\":" + std::to_string(state) + ",\"deviceId\":" + std::to_string(dwDeviceID)
+                          + ",\"status\":\"Ringing\",\"callerId\":\"" + callerIdStr 
+                          + "\",\"callType\":\"Inbound\",\"ts\":\"" + timestamp + "\"}";
+                OutputJson(json);
             }
             // Call active - INBOUND RECORD
             else if (state == CH_STATE_INRECORD)
@@ -271,26 +323,32 @@ int main(int argc, char* argv[])
     setvbuf(stderr, NULL, _IONBF, 0);
     
     // Print version to stderr first (so it shows when running exe directly)
-    std::cerr << "v2" << std::endl;
-    std::cerr.flush();
+    WriteToLog("v2");
+    WriteToLog("CppBridge starting...");
     
     // Auto-enable device on startup (F2)
     g_nDeviceType = USBBOX_TYPE_F2;
+    WriteToLog("Calling UsbBox_EnableDevice()...");
     int result = UsbBox_EnableDevice();
+    WriteToLog("UsbBox_EnableDevice() returned: " + std::to_string(result));
+    
     if (result == 0)
     {
+        WriteToLog("Setting event callback...");
         UsbBox_EventCallBack(USBEventCallback);
+        WriteToLog("Setting device type to F2...");
         UsbBox_SetDeviceType(g_nDeviceType);
         g_bEnabled = true;
         
-        // Send ready status to stderr (not JSON output)
-        std::cerr << "USB Bridge started. Device enabled (F2). Listening for calls..." << std::endl;
-        std::cerr.flush();
+        // Send ready status
+        WriteToLog("USB Bridge started. Device enabled (F2). Listening for calls...");
     }
     else
     {
-        std::cerr << "Failed to enable device. Error: " << result << std::endl;
-        std::cerr.flush();
+        WriteToLog("Failed to enable device. Error: " + std::to_string(result));
+        if (g_logFileOpen) {
+            g_logFile.close();
+        }
         return 1;
     }
     
@@ -309,7 +367,13 @@ int main(int argc, char* argv[])
     // Cleanup
     if (g_bEnabled)
     {
+        WriteToLog("Disabling device...");
         UsbBox_DisableDevice();
+    }
+    
+    WriteToLog("CppBridge exiting...");
+    if (g_logFileOpen) {
+        g_logFile.close();
     }
     
     return 0;
