@@ -70,7 +70,7 @@ function Build-Bridge {
         }
         
         Write-Host ""
-        Write-Host "✓ Build completed successfully!" -ForegroundColor Green
+        Write-Host "Build completed successfully!" -ForegroundColor Green
         Write-Host ""
         
         # Copy DLLs to output folder
@@ -108,12 +108,12 @@ function Show-CallInfo {
             "(No Caller ID)" 
         }
         $callType = if ($event.callType) { $event.callType } else { "Inbound" }
-        Write-Host "[$timestamp] 📞 NEW CALL - Type: $callType - $callerInfo" -ForegroundColor Green
+        Write-Host "[$timestamp] NEW CALL - Type: $callType - $callerInfo" -ForegroundColor Green
     }
     # Call active - IN CALL
     elseif ($event.status -eq "InCall") {
         $callType = if ($event.callType) { $event.callType } else { "Unknown" }
-        Write-Host "[$timestamp] 📱 CALL ACTIVE - Type: $callType (Line $($event.line))" -ForegroundColor Cyan
+        Write-Host "[$timestamp] CALL ACTIVE - Type: $callType (Line $($event.line))" -ForegroundColor Cyan
     }
     # Call duration update
     elseif ($event.duration -ne $null) {
@@ -121,16 +121,19 @@ function Show-CallInfo {
         $minutes = [math]::Floor($seconds / 60)
         $remainingSeconds = [math]::Round($seconds % 60, 1)
         $callType = if ($event.callType) { $event.callType } else { "Unknown" }
+        $durationMs = $event.duration
         
         if ($minutes -gt 0) {
-            Write-Host "[$timestamp] ⏱️  DURATION - Type: $callType - $minutes min $remainingSeconds sec ($($event.duration) ms)" -ForegroundColor Yellow
+            $durationStr = "[$timestamp] DURATION - Type: $callType - $minutes min $remainingSeconds sec ($durationMs ms)"
+            Write-Host $durationStr -ForegroundColor Yellow
         } else {
-            Write-Host "[$timestamp] ⏱️  DURATION - Type: $callType - $seconds sec ($($event.duration) ms)" -ForegroundColor Yellow
+            $durationStr = "[$timestamp] DURATION - Type: $callType - $seconds sec ($durationMs ms)"
+            Write-Host $durationStr -ForegroundColor Yellow
         }
     }
     # Call ended - FREE
     elseif ($event.status -eq "Free") {
-        Write-Host "[$timestamp] ✓ Call ended (Line $($event.line))" -ForegroundColor Gray
+        Write-Host "[$timestamp] Call ended (Line $($event.line))" -ForegroundColor Gray
     }
     # Missed call
     elseif ($event.status -eq "Missed") {
@@ -140,11 +143,11 @@ function Show-CallInfo {
             "(No Caller ID)" 
         }
         $callType = if ($event.callType) { $event.callType } else { "Inbound" }
-        Write-Host "[$timestamp] ❌ MISSED CALL - Type: $callType - $callerInfo" -ForegroundColor Red
+        Write-Host "[$timestamp] MISSED CALL - Type: $callType - $callerInfo" -ForegroundColor Red
     }
     # Other events
     elseif ($event.type -eq "event" -and $event.meaning) {
-        Write-Host "[$timestamp] ℹ️  $($event.meaning)" -ForegroundColor DarkGray
+        Write-Host "[$timestamp] INFO: $($event.meaning)" -ForegroundColor DarkGray
     }
 }
 
@@ -194,9 +197,9 @@ function Start-Listening {
                     $line = $reader.ReadLine()
                     if ($line -and $line.Trim() -ne "") {
                         if ($line -match "started|enabled|Listening") {
-                            Write-Host "✓ $line" -ForegroundColor Green
+                            Write-Host "[OK] $line" -ForegroundColor Green
                         } elseif ($line -match "Failed|Error") {
-                            Write-Host "✗ $line" -ForegroundColor Red
+                            Write-Host "[ERROR] $line" -ForegroundColor Red
                         } else {
                             Write-Host $line -ForegroundColor DarkGray
                         }
@@ -234,7 +237,7 @@ function Start-Listening {
             return
         }
         
-        Write-Host "✓ Bridge is running and listening for calls...`n" -ForegroundColor Green
+        Write-Host "Bridge is running and listening for calls...`n" -ForegroundColor Green
         
         # Use event-based async reading for stdout (non-blocking)
         $stdoutHandler = {
