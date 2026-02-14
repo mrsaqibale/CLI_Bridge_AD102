@@ -119,11 +119,9 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
             // Call answered - OFFHOOK (phone picked up)
             if (state == CH_STATE_HOOKOFF)
             {
-                // Track that call was answered
+                // Track that call was answered (use HOOKOFF as marker)
                 if (nReference >= 0 && nReference < 8) {
-                    // Check if we had a ringing call (inbound) or if it's outbound
-                    // For now, assume inbound if we had a caller ID
-                    g_lineCallState[nReference] = CH_STATE_INRECORD; // Assume inbound for now
+                    g_lineCallState[nReference] = CH_STATE_HOOKOFF; // Mark as answered
                 }
                 
                 std::string json = "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" + std::to_string(nReference) 
@@ -131,16 +129,11 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
                           + ",\"status\":\"Offhook\",\"callType\":\"Inbound\",\"ts\":\"" + timestamp + "\"}";
                 OutputJson(json);
                 
-                // Check duration immediately when call is answered
+                // Check duration immediately when call is answered (might be 0, but log it)
                 int recordTime = UsbBox_GetRecordTime(nReference);
-                if (recordTime > 0)
-                {
-                    std::string durationJson = "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" + std::to_string(nReference) 
-                              + ",\"param\":0,\"deviceId\":" + std::to_string(dwDeviceID)
-                              + ",\"duration\":" + std::to_string(recordTime) + ",\"callType\":\"Inbound\""
-                              + ",\"meaning\":\"Call duration: " + std::to_string(recordTime) + " ms\",\"ts\":\"" + timestamp + "\"}";
-                    OutputJson(durationJson);
-                }
+                char logMsg[128];
+                sprintf_s(logMsg, sizeof(logMsg), "OFFHOOK: GetRecordTime returned %d (line %d)", recordTime, nReference);
+                WriteToLog(logMsg);
             }
             // Call comes - RINGING
             else if (state == CH_STATE_RINGON)
@@ -221,32 +214,43 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
                     }
                 }
                 
-                // Check duration BEFORE outputting Free status (duration might be cleared after state change)
-                int recordTime = UsbBox_GetRecordTime(nReference);
-                
-                // If we don't know call type and have duration, try to determine from previous state
-                if (callType == "Unknown" && recordTime > 0) {
-                    // Check if there was a tracked state before resetting
-                    if (nReference >= 0 && nReference < 8) {
-                        if (g_lineCallState[nReference] == CH_STATE_INRECORD) {
-                            callType = "Inbound";
-                        } else if (g_lineCallState[nReference] == CH_STATE_OUTRECORD) {
+                // Check if call was answered (had OFFHOOK state)
+                bool callWasAnswered = false;
+                if (nReference >= 0 && nReference < 8) {
+                    if (g_lineCallState[nReference] == CH_STATE_HOOKOFF || 
+                        g_lineCallState[nReference] == CH_STATE_INRECORD || 
+                        g_lineCallState[nReference] == CH_STATE_OUTRECORD) {
+                        callWasAnswered = true;
+                        // Determine call type
+                        if (g_lineCallState[nReference] == CH_STATE_OUTRECORD) {
                             callType = "Outbound";
                         } else {
-                            // Default to Inbound if we had a caller ID earlier
                             callType = "Inbound";
                         }
                     }
                 }
                 
-                // Output duration if available (before Free status)
-                if (recordTime > 0)
+                // Check duration BEFORE outputting Free status (duration might be cleared after state change)
+                int recordTime = UsbBox_GetRecordTime(nReference);
+                char logMsg[256];
+                sprintf_s(logMsg, sizeof(logMsg), "HOOKON: callWasAnswered=%d, GetRecordTime=%d, callType=%s (line %d)", 
+                    callWasAnswered ? 1 : 0, recordTime, callType.c_str(), nReference);
+                WriteToLog(logMsg);
+                
+                // Output duration if call was answered (even if 0, to debug)
+                if (callWasAnswered)
                 {
-                    std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" << nReference 
-                              << ",\"param\":0,\"deviceId\":" << dwDeviceID
-                              << ",\"duration\":" << recordTime << ",\"callType\":\"" << callType 
-                              << "\",\"meaning\":\"Call duration: " << recordTime << " ms\",\"ts\":\"" << timestamp << "\"}" << std::endl;
-                    std::cout.flush();
+                    if (recordTime > 0) {
+                        std::string durationJson = "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" + std::to_string(nReference) 
+                                  + ",\"param\":0,\"deviceId\":" + std::to_string(dwDeviceID)
+                                  + ",\"duration\":" + std::to_string(recordTime) + ",\"callType\":\"" + callType 
+                                  + "\",\"meaning\":\"Call duration: " + std::to_string(recordTime) + " ms\",\"ts\":\"" + timestamp + "\"}";
+                        OutputJson(durationJson);
+                    } else {
+                        // Log that duration is 0 even though call was answered
+                        sprintf_s(logMsg, sizeof(logMsg), "WARNING: Call was answered but duration is 0 (line %d)", nReference);
+                        WriteToLog(logMsg);
+                    }
                 }
                 
                 // Reset the tracked state
