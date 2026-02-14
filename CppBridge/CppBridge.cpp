@@ -22,6 +22,9 @@ static int g_nDeviceType = USBBOX_TYPE_F2; // Default F2
 // Track call state per line to determine call type when call ends
 static int g_lineCallState[8] = {0}; // Track state for up to 8 lines
 
+// Track call start time for duration calculation
+static DWORD g_lineCallStartTime[8] = {0}; // Track when call was answered (OFFHOOK)
+
 // Log file
 static std::ofstream g_logFile;
 static bool g_logFileOpen = false;
@@ -122,18 +125,14 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
                 // Track that call was answered (use HOOKOFF as marker)
                 if (nReference >= 0 && nReference < 8) {
                     g_lineCallState[nReference] = CH_STATE_HOOKOFF; // Mark as answered
+                    // Record the time when call was answered
+                    g_lineCallStartTime[nReference] = GetTickCount();
                 }
                 
                 std::string json = "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" + std::to_string(nReference) 
                           + ",\"param\":" + std::to_string(state) + ",\"deviceId\":" + std::to_string(dwDeviceID)
                           + ",\"status\":\"Offhook\",\"callType\":\"Inbound\",\"ts\":\"" + timestamp + "\"}";
                 OutputJson(json);
-                
-                // Check duration immediately when call is answered (might be 0, but log it)
-                int recordTime = UsbBox_GetRecordTime(nReference);
-                char logMsg[128];
-                sprintf_s(logMsg, sizeof(logMsg), "OFFHOOK: GetRecordTime returned %d (line %d)", recordTime, nReference);
-                WriteToLog(logMsg);
             }
             // Call comes - RINGING
             else if (state == CH_STATE_RINGON)
@@ -216,6 +215,7 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
                 
                 // Check if call was answered (had OFFHOOK state)
                 bool callWasAnswered = false;
+                DWORD callDuration = 0;
                 if (nReference >= 0 && nReference < 8) {
                     if (g_lineCallState[nReference] == CH_STATE_HOOKOFF || 
                         g_lineCallState[nReference] == CH_STATE_INRECORD || 
@@ -227,30 +227,41 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
                         } else {
                             callType = "Inbound";
                         }
+                        
+                        // Calculate duration from timestamp
+                        if (g_lineCallStartTime[nReference] > 0) {
+                            DWORD currentTime = GetTickCount();
+                            callDuration = currentTime - g_lineCallStartTime[nReference];
+                            // Handle tick count wrap-around (happens every ~49 days)
+                            if (callDuration > 0x7FFFFFFF) {
+                                callDuration = 0;
+                            }
+                        }
                     }
                 }
                 
-                // Check duration BEFORE outputting Free status (duration might be cleared after state change)
+                // Try to get duration from device first
                 int recordTime = UsbBox_GetRecordTime(nReference);
-                char logMsg[256];
-                sprintf_s(logMsg, sizeof(logMsg), "HOOKON: callWasAnswered=%d, GetRecordTime=%d, callType=%s (line %d)", 
-                    callWasAnswered ? 1 : 0, recordTime, callType.c_str(), nReference);
-                WriteToLog(logMsg);
                 
-                // Output duration if call was answered (even if 0, to debug)
-                if (callWasAnswered)
+                // Use calculated duration if device returns 0 but call was answered
+                if (callWasAnswered && recordTime <= 0 && callDuration > 0) {
+                    recordTime = (int)callDuration;
+                }
+                
+                // Output duration if call was answered
+                if (callWasAnswered && recordTime > 0)
                 {
-                    if (recordTime > 0) {
-                        std::string durationJson = "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" + std::to_string(nReference) 
-                                  + ",\"param\":0,\"deviceId\":" + std::to_string(dwDeviceID)
-                                  + ",\"duration\":" + std::to_string(recordTime) + ",\"callType\":\"" + callType 
-                                  + "\",\"meaning\":\"Call duration: " + std::to_string(recordTime) + " ms\",\"ts\":\"" + timestamp + "\"}";
-                        OutputJson(durationJson);
-                    } else {
-                        // Log that duration is 0 even though call was answered
-                        sprintf_s(logMsg, sizeof(logMsg), "WARNING: Call was answered but duration is 0 (line %d)", nReference);
-                        WriteToLog(logMsg);
-                    }
+                    std::string durationJson = "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" + std::to_string(nReference) 
+                              + ",\"param\":0,\"deviceId\":" + std::to_string(dwDeviceID)
+                              + ",\"duration\":" + std::to_string(recordTime) + ",\"callType\":\"" + callType 
+                              + "\",\"meaning\":\"Call duration: " + std::to_string(recordTime) + " ms\",\"ts\":\"" + timestamp + "\"}";
+                    OutputJson(durationJson);
+                }
+                
+                // Reset tracking
+                if (nReference >= 0 && nReference < 8) {
+                    g_lineCallState[nReference] = 0;
+                    g_lineCallStartTime[nReference] = 0;
                 }
                 
                 // Reset the tracked state
