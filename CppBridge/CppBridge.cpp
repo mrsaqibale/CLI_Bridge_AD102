@@ -141,19 +141,27 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
                     } else if (g_lineCallState[nReference] == CH_STATE_OUTRECORD) {
                         callType = "Outbound";
                     }
-                    // Reset the tracked state
-                    g_lineCallState[nReference] = 0;
                 }
                 
-                // First output the Free status
-                std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" << nReference 
-                          << ",\"param\":" << state << ",\"deviceId\":" << dwDeviceID
-                          << ",\"status\":\"Free\",\"ts\":\"" << timestamp << "\"}" << std::endl;
-                std::cout.flush();
-                
-                // Check if there's a call duration (call was answered and had duration)
-                // Try to get duration immediately when call ends
+                // Check duration BEFORE outputting Free status (duration might be cleared after state change)
                 int recordTime = UsbBox_GetRecordTime(nReference);
+                
+                // If we don't know call type and have duration, try to determine from previous state
+                if (callType == "Unknown" && recordTime > 0) {
+                    // Check if there was a tracked state before resetting
+                    if (nReference >= 0 && nReference < 8) {
+                        if (g_lineCallState[nReference] == CH_STATE_INRECORD) {
+                            callType = "Inbound";
+                        } else if (g_lineCallState[nReference] == CH_STATE_OUTRECORD) {
+                            callType = "Outbound";
+                        } else {
+                            // Default to Inbound if we had a caller ID earlier
+                            callType = "Inbound";
+                        }
+                    }
+                }
+                
+                // Output duration if available (before Free status)
                 if (recordTime > 0)
                 {
                     std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" << nReference 
@@ -162,6 +170,17 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
                               << "\",\"meaning\":\"Call duration: " << recordTime << " ms\",\"ts\":\"" << timestamp << "\"}" << std::endl;
                     std::cout.flush();
                 }
+                
+                // Reset the tracked state
+                if (nReference >= 0 && nReference < 8) {
+                    g_lineCallState[nReference] = 0;
+                }
+                
+                // Now output the Free status
+                std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" << nReference 
+                          << ",\"param\":" << state << ",\"deviceId\":" << dwDeviceID
+                          << ",\"status\":\"Free\",\"ts\":\"" << timestamp << "\"}" << std::endl;
+                std::cout.flush();
             }
         }
         break;
@@ -228,6 +247,18 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
                       << "\",\"callType\":\"Inbound\",\"meaning\":\"" << EscapeJsonString(meaning.c_str()) 
                       << "\",\"ts\":\"" << timestamp << "\"}" << std::endl;
             std::cout.flush();
+            
+            // Check if there's actually a duration (call might have been answered despite MISSED event)
+            int recordTime = UsbBox_GetRecordTime(nReference);
+            if (recordTime > 0)
+            {
+                // Call was actually answered and had duration
+                std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" << nReference 
+                          << ",\"param\":0,\"deviceId\":" << dwDeviceID
+                          << ",\"duration\":" << recordTime << ",\"callType\":\"Inbound\""
+                          << ",\"meaning\":\"Call duration: " << recordTime << " ms\",\"ts\":\"" << timestamp << "\"}" << std::endl;
+                std::cout.flush();
+            }
         }
         break;
     }
