@@ -116,8 +116,34 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
         {
             int state = (int)dwParam;
             
+            // Call answered - OFFHOOK (phone picked up)
+            if (state == CH_STATE_HOOKOFF)
+            {
+                // Track that call was answered
+                if (nReference >= 0 && nReference < 8) {
+                    // Check if we had a ringing call (inbound) or if it's outbound
+                    // For now, assume inbound if we had a caller ID
+                    g_lineCallState[nReference] = CH_STATE_INRECORD; // Assume inbound for now
+                }
+                
+                std::string json = "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" + std::to_string(nReference) 
+                          + ",\"param\":" + std::to_string(state) + ",\"deviceId\":" + std::to_string(dwDeviceID)
+                          + ",\"status\":\"Offhook\",\"callType\":\"Inbound\",\"ts\":\"" + timestamp + "\"}";
+                OutputJson(json);
+                
+                // Check duration immediately when call is answered
+                int recordTime = UsbBox_GetRecordTime(nReference);
+                if (recordTime > 0)
+                {
+                    std::string durationJson = "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" + std::to_string(nReference) 
+                              + ",\"param\":0,\"deviceId\":" + std::to_string(dwDeviceID)
+                              + ",\"duration\":" + std::to_string(recordTime) + ",\"callType\":\"Inbound\""
+                              + ",\"meaning\":\"Call duration: " + std::to_string(recordTime) + " ms\",\"ts\":\"" + timestamp + "\"}";
+                    OutputJson(durationJson);
+                }
+            }
             // Call comes - RINGING
-            if (state == CH_STATE_RINGON)
+            else if (state == CH_STATE_RINGON)
             {
                 char szCallerID[64] = {0};
                 std::string callerIdStr = "";
@@ -234,6 +260,17 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
                           << ",\"status\":\"Free\",\"ts\":\"" << timestamp << "\"}" << std::endl;
                 std::cout.flush();
             }
+        }
+        break;
+        
+    case EVENT_RINGCOUNT:
+        {
+            // Ring count update - param is the ring count
+            // This happens during ringing, we can use it to track that call is still ringing
+            // Don't output JSON for every ring count, but log it for debugging
+            char logMsg[128];
+            sprintf_s(logMsg, sizeof(logMsg), "Ring count: %lu (line %d)", dwParam, nReference);
+            WriteToLog(logMsg);
         }
         break;
         
