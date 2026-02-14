@@ -17,6 +17,9 @@
 static bool g_bEnabled = false;
 static int g_nDeviceType = USBBOX_TYPE_F2; // Default F2
 
+// Track call state per line to determine call type when call ends
+static int g_lineCallState[8] = {0}; // Track state for up to 8 lines
+
 // Helper function to get current timestamp in ISO 8601 format
 std::string GetCurrentTimestamp()
 {
@@ -80,26 +83,85 @@ void CALLBACK USBEventCallback(WORD wEventCode, int nReference, DWORD dwParam, D
             // Call active - INBOUND RECORD
             else if (state == CH_STATE_INRECORD)
             {
+                // Track that this line has an active inbound call
+                if (nReference >= 0 && nReference < 8) {
+                    g_lineCallState[nReference] = CH_STATE_INRECORD;
+                }
+                
                 std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" << nReference 
                           << ",\"param\":" << state << ",\"deviceId\":" << dwDeviceID
                           << ",\"status\":\"InCall\",\"callType\":\"Inbound\",\"ts\":\"" << timestamp << "\"}" << std::endl;
                 std::cout.flush();
+                
+                // Also check duration immediately when call becomes active
+                // (in case EVENT_RECORDTIME doesn't fire automatically)
+                int recordTime = UsbBox_GetRecordTime(nReference);
+                if (recordTime > 0)
+                {
+                    std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" << nReference 
+                              << ",\"param\":0,\"deviceId\":" << dwDeviceID
+                              << ",\"duration\":" << recordTime << ",\"callType\":\"Inbound\""
+                              << ",\"meaning\":\"Call duration: " << recordTime << " ms\",\"ts\":\"" << timestamp << "\"}" << std::endl;
+                    std::cout.flush();
+                }
             }
             // Call active - OUTBOUND RECORD
             else if (state == CH_STATE_OUTRECORD)
             {
+                // Track that this line has an active outbound call
+                if (nReference >= 0 && nReference < 8) {
+                    g_lineCallState[nReference] = CH_STATE_OUTRECORD;
+                }
+                
                 std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" << nReference 
                           << ",\"param\":" << state << ",\"deviceId\":" << dwDeviceID
                           << ",\"status\":\"InCall\",\"callType\":\"Outbound\",\"ts\":\"" << timestamp << "\"}" << std::endl;
                 std::cout.flush();
+                
+                // Also check duration immediately when call becomes active
+                // (in case EVENT_RECORDTIME doesn't fire automatically)
+                int recordTime = UsbBox_GetRecordTime(nReference);
+                if (recordTime > 0)
+                {
+                    std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" << nReference 
+                              << ",\"param\":0,\"deviceId\":" << dwDeviceID
+                              << ",\"duration\":" << recordTime << ",\"callType\":\"Outbound\""
+                              << ",\"meaning\":\"Call duration: " << recordTime << " ms\",\"ts\":\"" << timestamp << "\"}" << std::endl;
+                    std::cout.flush();
+                }
             }
             // Call end - FREE
             else if (state == CH_STATE_HOOKON)
             {
+                // Determine call type from tracked state
+                std::string callType = "Unknown";
+                if (nReference >= 0 && nReference < 8) {
+                    if (g_lineCallState[nReference] == CH_STATE_INRECORD) {
+                        callType = "Inbound";
+                    } else if (g_lineCallState[nReference] == CH_STATE_OUTRECORD) {
+                        callType = "Outbound";
+                    }
+                    // Reset the tracked state
+                    g_lineCallState[nReference] = 0;
+                }
+                
+                // First output the Free status
                 std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":0,\"line\":" << nReference 
                           << ",\"param\":" << state << ",\"deviceId\":" << dwDeviceID
                           << ",\"status\":\"Free\",\"ts\":\"" << timestamp << "\"}" << std::endl;
                 std::cout.flush();
+                
+                // Check if there's a call duration (call was answered and had duration)
+                // Try to get duration immediately when call ends
+                int recordTime = UsbBox_GetRecordTime(nReference);
+                if (recordTime > 0)
+                {
+                    std::cout << "{\"type\":\"event\",\"api\":\"usbbox\",\"eventCode\":5,\"line\":" << nReference 
+                              << ",\"param\":0,\"deviceId\":" << dwDeviceID
+                              << ",\"duration\":" << recordTime << ",\"callType\":\"" << callType 
+                              << "\",\"meaning\":\"Call duration: " << recordTime << " ms\",\"ts\":\"" << timestamp << "\"}" << std::endl;
+                    std::cout.flush();
+                }
             }
         }
         break;
@@ -176,6 +238,10 @@ int main(int argc, char* argv[])
     // Set stdout to unbuffered for real-time output
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
+    
+    // Print version to stderr first (so it shows when running exe directly)
+    std::cerr << "v2" << std::endl;
+    std::cerr.flush();
     
     // Auto-enable device on startup (F2)
     g_nDeviceType = USBBOX_TYPE_F2;
