@@ -104,7 +104,6 @@ Send commands via stdin (newline-delimited JSON):
 {"cmd":"usbbox.getlineinfo","line":0}
 {"cmd":"ad101.start"}
 {"cmd":"ad101.stop"}
-{"cmd":"ad800.start"}
 {"cmd":"ad800.stop"}
 ```
 
